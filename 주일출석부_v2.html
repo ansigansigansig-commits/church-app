@@ -7,70 +7,81 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="주일출석부" />
 <title>주일출석부</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet" />
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { font-family: 'Noto Sans KR', sans-serif; background: #F7F4EF; min-height: 100vh; max-width: 480px; margin: 0 auto; }
-  
+  body { font-family: 'Pretendard Variable', 'Pretendard', sans-serif; background: linear-gradient(135deg, #FFF8F0 0%, #FFF0F5 50%, #F0F4FF 100%); min-height: 100vh; max-width: 480px; margin: 0 auto; }
+
   /* Header */
-  .header { background: #4A6741; padding: 48px 20px 0; position: sticky; top: 0; z-index: 100; }
+  .header { background: linear-gradient(135deg, #6B8F71 0%, #4A6741 100%); padding: 48px 20px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(74,103,65,0.3); }
   .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .header-subtitle { color: #C8A45A; font-size: 11px; font-weight: 700; letter-spacing: 2px; margin-bottom: 3px; }
+  .header-subtitle { color: #F0D78C; font-size: 11px; font-weight: 700; letter-spacing: 2px; margin-bottom: 3px; }
   .header-title { color: #fff; font-size: 18px; font-weight: 700; }
-  .save-badge { background: #C8A45A; color: #fff; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; opacity: 0; transition: opacity 0.3s; }
+  .header-mascot { display: flex; align-items: center; gap: 10px; }
+  .save-badge { background: #F0D78C; color: #5A4A1A; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; opacity: 0; transition: opacity 0.3s; }
   .save-badge.show { opacity: 1; }
   .sync-badge { background: #5B8FA8; color: #fff; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
   .nav { display: flex; }
   .nav-btn { flex: 1; background: none; border: none; padding: 12px 0; color: rgba(255,255,255,0.5); font-family: inherit; font-size: 13px; font-weight: 400; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
-  .nav-btn.active { color: #fff; font-weight: 700; border-bottom-color: #C8A45A; }
+  .nav-btn.active { color: #fff; font-weight: 700; border-bottom-color: #F0D78C; }
 
   /* Views */
   .view { display: none; }
   .view.active { display: block; }
 
   /* Date bar */
-  .date-bar { background: #fff; border-bottom: 1px solid #E8E2D9; padding: 14px 20px; }
+  .date-bar { background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.5); padding: 14px 20px; }
   .date-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
-  .date-btn { flex: 1; background: #F7F4EF; border: 1px solid #E8E2D9; border-radius: 10px; padding: 10px 14px; text-align: left; cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 700; color: #2D2A25; }
-  .session-toggle { display: flex; background: #F7F4EF; border-radius: 10px; border: 1px solid #E8E2D9; overflow: hidden; }
-  .session-btn { padding: 10px 18px; background: none; color: #8B8378; border: none; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 400; transition: all 0.2s; }
-  .session-btn.active { background: #4A6741; color: #fff; font-weight: 700; }
-  .date-picker { background: #F7F4EF; border-radius: 12px; padding: 12px; margin-bottom: 8px; }
+  .date-btn { flex: 1; background: rgba(255,255,255,0.6); border: 1px solid rgba(200,190,175,0.3); border-radius: 12px; padding: 10px 14px; text-align: left; cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 700; color: #2D2A25; transition: all 0.2s; }
+  .date-btn:active { transform: scale(0.97); }
+  .session-toggle { display: flex; background: rgba(255,255,255,0.5); border-radius: 12px; border: 1px solid rgba(200,190,175,0.3); overflow: hidden; }
+  .session-btn { padding: 10px 18px; background: none; color: #8B8378; border: none; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 400; transition: all 0.25s; }
+  .session-btn.active { background: linear-gradient(135deg, #6B8F71, #4A6741); color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(74,103,65,0.3); }
+  .date-picker { background: rgba(255,255,255,0.5); border-radius: 12px; padding: 12px; margin-bottom: 8px; }
   .date-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-  .date-chip { padding: 6px 12px; border-radius: 20px; border: 1px solid #E8E2D9; background: #fff; color: #2D2A25; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 400; transition: all 0.2s; }
-  .date-chip.active { border-color: #4A6741; background: #4A6741; color: #fff; font-weight: 700; }
+  .date-chip { padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(200,190,175,0.3); background: rgba(255,255,255,0.6); color: #2D2A25; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 400; transition: all 0.2s; }
+  .date-chip.active { border-color: #4A6741; background: linear-gradient(135deg, #6B8F71, #4A6741); color: #fff; font-weight: 700; }
   .custom-date-row { display: flex; gap: 8px; }
-  .custom-date-input { flex: 1; padding: 8px 12px; border: 1px solid #E8E2D9; border-radius: 8px; font-family: inherit; font-size: 13px; color: #2D2A25; background: #fff; }
-  .custom-date-confirm { padding: 8px 14px; background: #4A6741; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; }
+  .custom-date-input { flex: 1; padding: 8px 12px; border: 1px solid rgba(200,190,175,0.3); border-radius: 10px; font-family: inherit; font-size: 13px; color: #2D2A25; background: rgba(255,255,255,0.6); }
+  .custom-date-confirm { padding: 8px 14px; background: linear-gradient(135deg, #6B8F71, #4A6741); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; }
   .summary-bar { display: flex; gap: 8px; align-items: center; }
   .badge { border-radius: 20px; padding: 3px 10px; font-size: 13px; }
-  .badge-total { background: #4A6741; color: #fff; font-weight: 700; }
-  .badge-male { background: #EBF0EA; color: #4A6741; }
-  .badge-female { background: #FAF0F5; color: #A0527A; }
-  .all-btn { margin-left: auto; padding: 4px 12px; background: none; border: 1px solid #C8A45A; border-radius: 20px; color: #C8A45A; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; }
+  .badge-total { background: linear-gradient(135deg, #6B8F71, #4A6741); color: #fff; font-weight: 700; }
+  .badge-male { background: rgba(107,143,113,0.12); color: #4A6741; }
+  .badge-female { background: rgba(160,82,122,0.1); color: #A0527A; }
+  .all-btn { margin-left: auto; padding: 4px 12px; background: none; border: 1.5px solid #F0D78C; border-radius: 20px; color: #B8941E; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+  .all-btn:active { transform: scale(0.95); }
 
   /* Filter */
   .filter-bar { padding: 12px 20px 0; display: flex; gap: 8px; align-items: center; }
-  .search-input { flex: 1; padding: 8px 12px; border: 1px solid #E8E2D9; border-radius: 20px; font-family: inherit; font-size: 13px; background: #fff; color: #2D2A25; outline: none; }
-  .filter-btn { padding: 7px 12px; border-radius: 20px; border: 1px solid #E8E2D9; background: #fff; color: #8B8378; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 400; transition: all 0.2s; }
-  .filter-btn.active { border-color: #4A6741; background: #4A6741; color: #fff; font-weight: 700; }
+  .search-input { flex: 1; padding: 8px 14px; border: 1px solid rgba(200,190,175,0.3); border-radius: 20px; font-family: inherit; font-size: 13px; background: rgba(255,255,255,0.7); color: #2D2A25; outline: none; backdrop-filter: blur(10px); transition: all 0.2s; }
+  .search-input:focus { border-color: #6B8F71; box-shadow: 0 0 0 3px rgba(107,143,113,0.1); }
+  .filter-btn { padding: 7px 12px; border-radius: 20px; border: 1px solid rgba(200,190,175,0.3); background: rgba(255,255,255,0.6); color: #8B8378; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 400; transition: all 0.2s; }
+  .filter-btn.active { border-color: #4A6741; background: linear-gradient(135deg, #6B8F71, #4A6741); color: #fff; font-weight: 700; }
 
   /* Member list */
   .member-list { padding: 10px 20px 120px; }
-  .member-item { display: flex; align-items: center; gap: 12px; padding: 13px 16px; margin-bottom: 6px; border-radius: 14px; background: #fff; border: 1.5px solid #E8E2D9; cursor: pointer; transition: all 0.15s; user-select: none; -webkit-user-select: none; }
-  .member-item.present { background: #EEF3ED; border-color: #4A6741; }
-  .member-item.absent { background: #FFF5F5; border-color: #E8B4B4; }
-  .member-avatar { width: 32px; height: 32px; border-radius: 50%; background: #E5E0D8; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #8B8378; font-weight: 700; flex-shrink: 0; transition: all 0.2s; }
-  .member-item.present .member-avatar { background: #4A6741; color: #fff; font-size: 16px; }
-  .member-item.absent .member-avatar { background: #E8B4B4; color: #C0392B; font-size: 16px; }
+  .member-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-bottom: 8px; border-radius: 16px; background: rgba(255,255,255,0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1.5px solid rgba(255,255,255,0.6); cursor: pointer; transition: all 0.2s ease; user-select: none; -webkit-user-select: none; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .member-item:active { transform: scale(0.98); }
+  .member-item.present { background: rgba(238,243,237,0.8); border-color: rgba(107,143,113,0.4); box-shadow: 0 2px 12px rgba(74,103,65,0.1); }
+  .member-item.absent { background: rgba(255,240,240,0.8); border-color: rgba(232,180,180,0.5); }
+  .member-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #F5EDE3, #E5DDD3); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; transition: all 0.25s; overflow: hidden; }
+  .member-item.present .member-avatar { background: linear-gradient(135deg, #7BAF73, #4A6741); box-shadow: 0 2px 8px rgba(74,103,65,0.25); }
+  .member-item.absent .member-avatar { background: linear-gradient(135deg, #F0C0C0, #E8A0A0); }
   .member-info { flex: 1; }
-  .member-name { font-size: 15px; font-weight: 500; color: #2D2A25; }
-  .member-item.present .member-name { font-weight: 700; color: #4A6741; }
+  .member-name { font-size: 15px; font-weight: 500; color: #2D2A25; transition: all 0.2s; }
+  .member-item.present .member-name { font-weight: 700; color: #3D6B35; }
   .member-item.absent .member-name { color: #C0392B; }
   .member-reason { font-size: 12px; color: #C0392B; margin-top: 2px; }
-  .gender-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; }
-  .gender-m { background: #EBF0EA; color: #4A6741; }
-  .gender-f { background: #FAF0F5; color: #A0527A; }
+  .other-session { font-size: 11px; margin-top: 2px; color: #999; }
+  .other-session .os-present { color: #4A6741; font-weight: 600; }
+  .other-session .os-absent { color: #C0392B; font-weight: 600; }
+  .gender-tag { font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 500; }
+  .gender-m { background: rgba(107,143,113,0.1); color: #4A6741; }
+  .gender-f { background: rgba(160,82,122,0.08); color: #A0527A; }
+
+  /* Cat SVG */
+  .cat-svg { width: 26px; height: 26px; }
 
   /* Stats */
   .stats-container { padding: 20px; }
@@ -104,9 +115,9 @@
   .sync-btn { width: 100%; padding: 12px; background: #5B8FA8; color: #fff; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 700; margin-top: 8px; }
 
   /* Modal */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
   .modal-overlay.show { opacity: 1; pointer-events: all; }
-  .modal { background: #fff; border-radius: 20px 20px 0 0; padding: 24px; width: 100%; max-width: 480px; transform: translateY(100%); transition: transform 0.3s ease; }
+  .modal { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 24px 24px 0 0; padding: 24px; width: 100%; max-width: 480px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
   .modal-overlay.show .modal { transform: translateY(0); }
   .modal-title { font-weight: 700; font-size: 16px; color: #2D2A25; margin-bottom: 4px; }
   .modal-sub { color: #8B8378; font-size: 13px; margin-bottom: 20px; }
@@ -132,9 +143,27 @@
 <!-- Header -->
 <div class="header">
   <div class="header-top">
-    <div>
-      <div class="header-subtitle">SOLI DEO GLORIA</div>
-      <div class="header-title">주일 출석부</div>
+    <div class="header-mascot">
+      <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M25 30 L30 10 L40 28 Z" fill="#F0D78C"/>
+        <path d="M75 30 L70 10 L60 28 Z" fill="#F0D78C"/>
+        <circle cx="50" cy="50" r="28" fill="#F0D78C"/>
+        <circle cx="40" cy="44" r="4" fill="#2D2A25"/>
+        <circle cx="60" cy="44" r="4" fill="#2D2A25"/>
+        <circle cx="41" cy="43" r="1.5" fill="#fff"/>
+        <circle cx="61" cy="43" r="1.5" fill="#fff"/>
+        <ellipse cx="50" cy="54" rx="3" ry="2" fill="#E8A0A0"/>
+        <path d="M47 56 Q50 60 53 56" stroke="#2D2A25" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M30 50 L15 47" stroke="#F0D78C" stroke-width="2" stroke-linecap="round"/>
+        <path d="M30 53 L16 55" stroke="#F0D78C" stroke-width="2" stroke-linecap="round"/>
+        <path d="M70 50 L85 47" stroke="#F0D78C" stroke-width="2" stroke-linecap="round"/>
+        <path d="M70 53 L84 55" stroke="#F0D78C" stroke-width="2" stroke-linecap="round"/>
+        <path d="M38 70 Q50 80 62 70" stroke="#F0D78C" stroke-width="8" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="header-subtitle">SOLI DEO GLORIA</div>
+        <div class="header-title">주일 출석부</div>
+      </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <span class="sync-badge" id="syncBadge" style="display:none">🔄 동기화 중</span>
@@ -634,14 +663,31 @@ function renderMemberList() {
     const isPresent = status?.present === true;
     const isAbsent = status?.present === false;
     const cls = isPresent ? "present" : isAbsent ? "absent" : "";
-    const avatar = isPresent ? "✓" : isAbsent ? "✕" : m.name[0];
+    const catDefault = `<svg class="cat-svg" viewBox="0 0 60 60" fill="none"><path d="M15 22L18 10L25 20Z" fill="#C8B89A"/><path d="M45 22L42 10L35 20Z" fill="#C8B89A"/><circle cx="30" cy="32" r="16" fill="#C8B89A"/><circle cx="25" cy="29" r="2.5" fill="#2D2A25"/><circle cx="35" cy="29" r="2.5" fill="#2D2A25"/><ellipse cx="30" cy="34" rx="2" ry="1.2" fill="#E8A0A0"/><path d="M28 35.5Q30 38 32 35.5" stroke="#2D2A25" stroke-width="1" fill="none" stroke-linecap="round"/></svg>`;
+    const catHappy = `<svg class="cat-svg" viewBox="0 0 60 60" fill="none"><path d="M15 22L18 10L25 20Z" fill="#fff"/><path d="M45 22L42 10L35 20Z" fill="#fff"/><circle cx="30" cy="32" r="16" fill="#fff"/><path d="M22 29Q25 26 28 29" stroke="#2D2A25" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M32 29Q35 26 38 29" stroke="#2D2A25" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="30" cy="34" rx="2" ry="1.2" fill="#FFB0B0"/><path d="M27 35.5Q30 39 33 35.5" stroke="#2D2A25" stroke-width="1.2" fill="none" stroke-linecap="round"/><text x="44" y="20" font-size="12">&#9834;</text></svg>`;
+    const catSad = `<svg class="cat-svg" viewBox="0 0 60 60" fill="none"><path d="M17 24L18 12L25 22Z" fill="#D4A0A0"/><path d="M43 24L42 12L35 22Z" fill="#D4A0A0"/><circle cx="30" cy="32" r="16" fill="#D4A0A0"/><circle cx="25" cy="30" r="2.5" fill="#2D2A25"/><circle cx="35" cy="30" r="2.5" fill="#2D2A25"/><path d="M24 27L27 25" stroke="#2D2A25" stroke-width="1" stroke-linecap="round"/><path d="M36 27L33 25" stroke="#2D2A25" stroke-width="1" stroke-linecap="round"/><ellipse cx="30" cy="35" rx="2" ry="1.2" fill="#E88"/><path d="M27 37Q30 35 33 37" stroke="#2D2A25" stroke-width="1" fill="none" stroke-linecap="round"/><ellipse cx="22" cy="33" rx="3" ry="1.5" fill="rgba(255,150,150,0.3)"/><ellipse cx="38" cy="33" rx="3" ry="1.5" fill="rgba(255,150,150,0.3)"/></svg>`;
+    const avatar = isPresent ? catHappy : isAbsent ? catSad : catDefault;
     const reason = isAbsent && status?.reason ? `<div class="member-reason">${status.reason}</div>` : "";
+
+    // 반대 세션 출석 상태 표시
+    const otherSession = currentSession === "오전" ? "오후" : "오전";
+    const otherKey = `${selectedDate}_${otherSession}`;
+    const otherData = attendance[otherKey];
+    const otherStatus = otherData ? (otherData[m.id] || otherData[String(m.id)] || otherData[parseInt(m.id)]) : undefined;
+    let otherHtml = "";
+    if (otherStatus?.present === true) {
+      otherHtml = `<div class="other-session"><span class="os-present">${otherSession} ✓</span></div>`;
+    } else if (otherStatus?.present === false) {
+      otherHtml = `<div class="other-session"><span class="os-absent">${otherSession} ✕</span></div>`;
+    }
+
     return `
       <div class="member-item ${cls}" onclick="toggleMember(${m.id})">
         <div class="member-avatar">${avatar}</div>
         <div class="member-info">
           <div class="member-name">${m.name}</div>
           ${reason}
+          ${otherHtml}
         </div>
         <span class="gender-tag ${m.gender === '남' ? 'gender-m' : 'gender-f'}">${m.gender}</span>
       </div>`;
