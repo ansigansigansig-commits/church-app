@@ -27,6 +27,28 @@ FB_URL = "https://sdgc-ae7f9-default-rtdb.asia-southeast1.firebasedatabase.app"
 OUTPUT_DIR = Path.home() / "Desktop"
 
 
+def ask_save_location(default_name: str) -> str | None:
+    """macOS 저장 다이얼로그. 취소 시 None 반환."""
+    try:
+        result = subprocess.run(
+            [
+                "osascript", "-e",
+                f'set f to POSIX path of (choose file name with prompt '
+                f'"일지 저장 위치를 선택하세요" default name "{default_name}" '
+                f'default location (path to desktop))\nreturn f',
+            ],
+            capture_output=True, text=True, timeout=120,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            path = result.stdout.strip()
+            if not path.endswith(".hwpx"):
+                path += ".hwpx"
+            return path
+    except Exception as e:
+        log.warning(f"저장 다이얼로그 실패 (바탕화면 저장): {e}")
+    return None
+
+
 def notify_mac(title, message):
     """macOS 알림"""
     subprocess.run(
@@ -54,8 +76,11 @@ def check_firebase():
             if data.get("generate_requested") and not data.get("generated"):
                 log.info(f"일지 생성 요청 감지: {date_key}")
 
-                filename = f"SDG일지_{date_key}.docx"
-                output_path = OUTPUT_DIR / filename
+                filename = f"SDG일지_{date_key}.hwpx"
+
+                # macOS 저장 다이얼로그
+                save_path = ask_save_location(filename)
+                output_path = Path(save_path) if save_path else OUTPUT_DIR / filename
 
                 try:
                     generate_journal_docx(data, str(output_path))
@@ -99,10 +124,10 @@ def manual_generate():
     data = request.json
     if not data or not data.get("date"):
         return jsonify({"error": "date required"}), 400
-    filename = f"SDG일지_{data['date']}.docx"
+    filename = f"SDG일지_{data['date']}.hwpx"
     output_path = OUTPUT_DIR / filename
-    generate_journal_docx(data, str(output_path))
-    return jsonify({"status": "ok", "path": str(output_path)})
+    result_path = generate_journal_docx(data, str(output_path))
+    return jsonify({"status": "ok", "path": result_path})
 
 
 def main():

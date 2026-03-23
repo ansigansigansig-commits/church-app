@@ -1,0 +1,7 @@
+.DS_Store
+journal_server/venv/
+journal_server/*.log
+journal_server/test_*.hwpx
+journal_server/test_*.docx
+journal_server/template_tagged.hwpx
+.claude/
