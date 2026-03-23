@@ -574,9 +574,8 @@ function init() {
     document.getElementById("connectionStatus").innerHTML = `<div class="connected-badge">✓ 구글 시트 연결됨</div>`;
   }
 
-  const CLAUDE_API_KEY = "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";
-  localStorage.setItem("claudeApiKey", CLAUDE_API_KEY);
-  document.getElementById("apiKeyInput").value = CLAUDE_API_KEY;
+  const CLAUDE_API_KEY = localStorage.getItem("claudeApiKey") || "";
+  if (CLAUDE_API_KEY) document.getElementById("apiKeyInput").value = CLAUDE_API_KEY;
   document.getElementById("apiKeyStatus").textContent = "✓ API 키 자동 설정됨";
 
   // Set default date to most recent sunday
