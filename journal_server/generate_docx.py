@@ -60,8 +60,15 @@ def generate_journal_docx(data: dict, output_path: str) -> str:
     return str(out)
 
 
+def _escape_xml(text: str) -> str:
+    """XML 특수문자 이스케이프."""
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 def _replace_fields(xml: str, data: dict) -> str:
     """원본 HWPX XML의 데이터 값을 새 데이터로 직접 치환."""
+    # 모든 데이터 값에서 XML 특수문자 이스케이프
+    data = {k: _escape_xml(str(v)) if isinstance(v, str) else v for k, v in data.items()}
 
     # 단순 텍스트 치환 (원본 값 → 새 값)
     simple = [
