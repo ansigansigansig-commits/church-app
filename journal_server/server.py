@@ -77,10 +77,7 @@ def check_firebase():
                 log.info(f"일지 생성 요청 감지: {date_key}")
 
                 filename = f"SDG일지_{date_key}.hwpx"
-
-                # macOS 저장 다이얼로그
-                save_path = ask_save_location(filename)
-                output_path = Path(save_path) if save_path else OUTPUT_DIR / filename
+                output_path = OUTPUT_DIR / filename
 
                 try:
                     generate_journal_docx(data, str(output_path))
