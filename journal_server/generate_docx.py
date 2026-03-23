@@ -14,13 +14,14 @@ TEMPLATE_PATH = Path(__file__).parent / "template.hwpx"
 def _replace_in_zip(zip_path: str, entry_name: str, new_data: bytes):
     """ZIP 파일 내 특정 엔트리만 교체 (zip 명령어로 원본 메타데이터 보존)."""
     import subprocess, tempfile
+    abs_zip = str(Path(zip_path).resolve())
     tmp_dir = tempfile.mkdtemp()
     try:
         entry_file = Path(tmp_dir) / entry_name
         entry_file.parent.mkdir(parents=True, exist_ok=True)
         entry_file.write_bytes(new_data)
         subprocess.run(
-            ["zip", zip_path, entry_name],
+            ["zip", abs_zip, entry_name],
             cwd=tmp_dir, check=True, capture_output=True,
         )
     finally:
@@ -84,11 +85,11 @@ def _replace_fields(xml: str, data: dict) -> str:
     visitors_old = "장진욱 (성동구) /오전만 참석, 권다인 (구미) "
     xml = xml.replace(visitors_old, data.get("visitors", "-"), 1)
 
-    # 결석교인 (2줄)
+    # 결석교인 (2줄 → 1줄로 합쳐서 치환, 빈 텍스트 태그 방지)
     abs1 = "- 오전,오후: 이재우, 김해련(수술), 고영진,고윤석, 고영민, 고영우, 박송빈, 정다혜(포항)"
     abs2 = "- 오후: 김용래, 지영원, 김도예"
     xml = xml.replace(abs1, data.get("absences", "-"), 1)
-    xml = xml.replace(abs2, "", 1)
+    xml = xml.replace(abs2, "-", 1)
 
     # 오전 찬송 (긴 텍스트)
     hymn_match = re.search(r"시편찬송\s+283장.*?살후 3장\)\s*", xml, re.DOTALL)
