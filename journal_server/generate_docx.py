@@ -118,30 +118,36 @@ def generate_journal_docx(data: dict, output_path: str) -> str:
                         sub_list = child
                         break
                 if sub_list is not None:
+                    from copy import deepcopy
+
                     paras = [p for p in sub_list if p.tag.split('}')[-1] == 'p']
                     ann_text = data.get("announcements", "-")
                     ann_lines = ann_text.split("\n") if ann_text else ["-"]
-                    # 빈 줄 제거
                     ann_lines = [l for l in ann_lines if l.strip()]
 
-                    # paragraph 부족 시 복제 추가
-                    from copy import deepcopy
-                    while len(paras) < len(ann_lines):
-                        new_p = deepcopy(paras[-1])
-                        sub_list.append(new_p)
-                        paras.append(new_p)
+                    # 첫 paragraph를 템플릿으로 사용 (스타일 통일)
+                    template_p = deepcopy(paras[0])
+                    # 템플릿에서 run을 1개만 남기고 정리
+                    t_runs = [r for r in template_p if r.tag.split('}')[-1] == 'run']
+                    for r in t_runs[1:]:
+                        template_p.remove(r)
+                    # linesegarray 제거
+                    for child in list(template_p):
+                        if 'linesegarray' in child.tag:
+                            template_p.remove(child)
 
-                    for pi, para in enumerate(paras):
-                        t_elems = [t for t in para.iter()
+                    # 기존 paragraph 모두 제거
+                    for p in paras:
+                        sub_list.remove(p)
+
+                    # 데이터 줄 수만큼 새 paragraph 생성
+                    for line in ann_lines:
+                        new_p = deepcopy(template_p)
+                        t_elems = [t for t in new_p.iter()
                                   if t.tag.split('}')[-1] == 't']
-                        if not t_elems:
-                            continue
-                        if pi < len(ann_lines):
-                            t_elems[0].text = _esc(ann_lines[pi])
-                        else:
-                            t_elems[0].text = " "
-                        for t in t_elems[1:]:
-                            t.text = " "
+                        if t_elems:
+                            t_elems[0].text = _esc(line)
+                        sub_list.append(new_p)
             break
 
     # === 기타 모임 ===
