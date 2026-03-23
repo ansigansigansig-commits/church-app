@@ -182,11 +182,43 @@ def generate_journal_docx(data: dict, output_path: str) -> str:
 
 
 def _replace_study(root, classes):
-    """학습 표 치환. 테이블 셀(tc) 기반으로 안전하게 치환."""
-    # 학습 테이블 찾기: 부서명이 포함된 테이블
-    dept_markers = ["어린이 성경공부", "유치부"]
-    study_tables = []
+    """학습 표 치환. 부서명→테이블 위치 매핑 후 셀 기반 치환."""
+    # 템플릿의 부서 배치 (테이블1: 오전, 테이블2: 오후)
+    DEPT_ORDER = [
+        ["어린이 성경공부", "유스2부 주일오전", "유스1부 주일오전", "청년부", "청년부 오전"],
+        ["유치부", "초등1부", "초등2부", "청소년1부", "청소년2부"],
+    ]
 
+    # Firebase 부서명 → 템플릿 부서명 매핑
+    dept_aliases = {
+        # 테이블1 (오후)
+        "유치부": "유치부",
+        "초등1부": "초등1부", "초등 1부": "초등1부",
+        "초등2부": "초등2부", "초등 2부": "초등2부",
+        "청소년1부": "청소년1부", "청소년 1부": "청소년1부",
+        "청소년2부": "청소년2부", "청소년 2부": "청소년2부",
+        "청소년 2부 오후": "청소년2부", "청소년2부 오후": "청소년2부",
+        "청소년 1부 오후": "청소년1부", "청소년1부 오후": "청소년1부",
+        # 테이블2 (오전)
+        "어린이 성경공부": "어린이 성경공부",
+        "유스2부 주일오전": "유스2부 주일오전", "유스 2부 주일오전": "유스2부 주일오전",
+        "유스1부 주일오전": "유스1부 주일오전", "유스1부  주일오전": "유스1부 주일오전",
+        "유스 1부 주일오전": "유스1부 주일오전",
+        "청소년 1부 오전": "유스1부 주일오전", "청소년1부 오전": "유스1부 주일오전",
+        "청소년 2부 오전": "유스2부 주일오전", "청소년2부 오전": "유스2부 주일오전",
+        "청년부": "청년부", "청년부 오후": "청년부",
+        "청년부 오전": "청년부 오전",
+    }
+
+    # classes를 부서명 기준으로 매핑
+    dept_data = {}
+    for cls in classes:
+        dept = cls.get("department", "")
+        normalized = dept_aliases.get(dept, dept)
+        dept_data[normalized] = cls
+
+    # 학습 테이블 찾기
+    study_tables = []
     for tbl in root.iter():
         if tbl.tag.split('}')[-1] != 'tbl':
             continue
@@ -194,13 +226,12 @@ def _replace_study(root, classes):
             t.text for t in tbl.iter()
             if t.tag.split('}')[-1] == 't' and t.text
         )
-        if any(m in tbl_text for m in dept_markers):
+        if any(m in tbl_text for m in ["어린이 성경공부", "유치부"]):
             study_tables.append(tbl)
 
     if not study_tables:
         return
 
-    # 행 필드 매핑
     row_map = {
         "시간": "time", "학생": "attendees", "교사": "teacher",
         "교재": "material", "진도": "content", "비고": "note",
@@ -208,6 +239,9 @@ def _replace_study(root, classes):
     }
 
     for tbl_idx, tbl in enumerate(study_tables):
+        if tbl_idx >= len(DEPT_ORDER):
+            break
+        dept_names = DEPT_ORDER[tbl_idx]
         rows = [r for r in tbl if r.tag.split('}')[-1] == 'tr']
 
         for row in rows:
@@ -215,29 +249,23 @@ def _replace_study(root, classes):
             if not cells:
                 continue
 
-            # 첫 셀의 텍스트 = 레이블
             label_texts = [t.text.strip() for t in cells[0].iter()
                           if t.tag.split('}')[-1] == 't' and t.text and t.text.strip()]
             label = label_texts[0] if label_texts else ""
 
-            # 헤더 행 (부서명)
+            # 헤더 행 (부서명) — 부서명은 그대로 유지
             if not label and len(cells) > 1:
-                for col_idx, cell in enumerate(cells[1:], 0):
-                    cls_idx = tbl_idx * 5 + col_idx
-                    cls = classes[cls_idx] if cls_idx < len(classes) else None
-                    t_elems = [t for t in cell.iter() if t.tag.split('}')[-1] == 't']
-                    for t in t_elems:
-                        t.text = _esc(cls.get("department", "-")) if cls else "-"
                 continue
 
             field = row_map.get(label)
             if not field:
                 continue
 
-            # 데이터 셀 (col 1~5)
             for col_idx, cell in enumerate(cells[1:], 0):
-                cls_idx = tbl_idx * 5 + col_idx
-                cls = classes[cls_idx] if cls_idx < len(classes) else None
+                if col_idx >= len(dept_names):
+                    break
+                dept_name = dept_names[col_idx]
+                cls = dept_data.get(dept_name)
 
                 t_elems = [t for t in cell.iter() if t.tag.split('}')[-1] == 't']
                 if not t_elems:
@@ -264,7 +292,6 @@ def _replace_study(root, classes):
                 else:
                     val = "-"
 
-                # 첫 텍스트 노드에 값, 나머지 비움
                 t_elems[0].text = val
                 for t in t_elems[1:]:
                     t.text = " "
