@@ -124,6 +124,13 @@ def generate_journal_docx(data: dict, output_path: str) -> str:
                     # 빈 줄 제거
                     ann_lines = [l for l in ann_lines if l.strip()]
 
+                    # paragraph 부족 시 복제 추가
+                    from copy import deepcopy
+                    while len(paras) < len(ann_lines):
+                        new_p = deepcopy(paras[-1])
+                        sub_list.append(new_p)
+                        paras.append(new_p)
+
                     for pi, para in enumerate(paras):
                         t_elems = [t for t in para.iter()
                                   if t.tag.split('}')[-1] == 't']
@@ -135,14 +142,6 @@ def generate_journal_docx(data: dict, output_path: str) -> str:
                             t_elems[0].text = " "
                         for t in t_elems[1:]:
                             t.text = " "
-
-                    # paragraph 부족 시 마지막 줄들을 마지막 paragraph에 합침
-                    if len(ann_lines) > len(paras):
-                        last_t = [t for t in paras[-1].iter()
-                                 if t.tag.split('}')[-1] == 't']
-                        if last_t:
-                            remaining = ann_lines[len(paras)-1:]
-                            last_t[0].text = _esc(" / ".join(remaining))
             break
 
     # === 기타 모임 ===

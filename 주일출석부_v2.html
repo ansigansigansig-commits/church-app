@@ -1445,7 +1445,30 @@ async function extractJournalFromPdf() {
   const apiKey = localStorage.getItem('geminiApiKey');
   if (!apiKey) { statusEl.textContent = '⚠️ 설정탭에서 Gemini API 키를 먼저 입력해주세요.'; return; }
   statusEl.textContent = '🔄 Gemini가 주보를 분석 중...';
-  const prompt = "이 문서는 솔리데오글로리아교회 주일 예배 주보입니다. 아래 JSON 형식으로만 응답하세요. 마크다운 없이 순수 JSON만.\n\n주보 분석 요령:\n- 날짜: 상단 날짜 YYYY-MM-DD\n- 오전 시간: '오전(11:00)' → '11:00'\n- 설교 제목: 강설 제목 (괄호 안의 부제 포함)\n- 오후 시간: '주일 오후 순서(2:30)' → '14:30' (24시간제). 오후 모임 시간표에서 '주일 오후 모임' 시간도 참고\n- 오후 기도 인도자: 교회공지에서 '금주일 오후 기도 • ○○' 찾기 (직분 없이 이름만도 가능)\n- 오후 인도자: '주일 오후 순서' 하단의 프로그램명과 인도자. 예: 'SDG 스쿨'이면 강사명\n- 오후 제목: '주일 오후 순서' 하단에 있는 프로그램명 (예: '상반기 SDG 스쿨')\n- 오후 찬송: '주일 오후 순서' 하단의 '부를 찬송' 항목\n\n{\"date\":\"YYYY-MM-DD\",\"am_preacher\":\"설교자\",\"am_time\":\"오전 시작시간\",\"am_time_end\":\"오전 마침시간\",\"am_title\":\"설교 제목\",\"am_scripture\":\"본문\",\"am_pre\":\"예배전 순서\",\"am_hymns\":\"찬송 줄바꿈 구분\",\"am_creed\":\"신앙고백\",\"am_sacrament\":\"성례\",\"pm_prayer\":\"오후 기도 인도자\",\"pm_leader\":\"오후 인도자\",\"pm_time\":\"오후 시작\",\"pm_time_end\":\"오후 마침\",\"pm_title\":\"오후 제목\",\"pm_scripture\":\"오후 본문\",\"pm_hymns\":\"오후 찬송\",\"pm_creed\":\"오후 신앙고백\",\"announcements\":\"공지사항 전체\"}";
+  const prompt = `이 문서는 솔리데오글로리아교회 주일 예배 주보입니다. 아래 JSON 형식으로만 응답하세요. 마크다운 없이 순수 JSON만.
+
+주보 분석 요령:
+- date: 상단 날짜를 YYYY-MM-DD 형식으로
+- am_preacher: 담임목사 이름 (보통 "김병혁 목사"). "설교자"라는 레이블이 아니라 실제 이름!
+- am_time: "시작시간 ~ 종료시간" 형태로 (예: "10:45 ~ 13:00"). 주보의 오전예배 시간표 참고
+- am_title: 강설/설교 제목 (괄호 부제 포함). 주보에서 "강설" 또는 "설교" 항목
+- am_scripture: 성경 본문 (예: "창 32:1-12")
+- am_pre: 예배전 순서 전체를 한 줄로 (예: "시편('성전에 올라가는 노래') 해설")
+- am_hymns: 찬송가 전체 목록. 각 찬송을 줄바꿈(\\n)으로 구분. 형식: "시편찬송 283장 (시 134편)" 등
+- am_creed: 신앙고백 종류 (예: "니케아-콘스탄티노플 신조", "사도신경")
+- am_sacrament: 성례 유무. 없으면 "-"
+- pm_prayer: 오후 기도 인도자 이름 + 직분 (교회공지에서 "금주일 오후 기도" 항목)
+- pm_leader: 오후 모임 인도자/강사 이름 + 직분
+- pm_time: "시작시간 ~ 종료시간" 형태로 (예: "14:45 ~ 16:30")
+- pm_title: 오후 프로그램명 (예: "사사기 해설", "상반기 SDG 스쿨")
+- pm_scripture: 오후 본문. 없으면 "-"
+- pm_hymns: 오후 찬송 목록. 형식: "193(99편), 92(45편)"
+- pm_creed: 오후 신앙고백. 없으면 "-"
+- announcements: 공지사항 전체 내용. 줄바꿈(\\n)으로 구분
+
+반드시 실제 사람 이름을 넣으세요. "설교자", "인도자" 같은 레이블이 아니라 주보에 적힌 실제 이름입니다.
+
+{"date":"","am_preacher":"","am_time":"","am_title":"","am_scripture":"","am_pre":"","am_hymns":"","am_creed":"","am_sacrament":"","pm_prayer":"","pm_leader":"","pm_time":"","pm_title":"","pm_scripture":"","pm_hymns":"","pm_creed":"","announcements":""}`;
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
