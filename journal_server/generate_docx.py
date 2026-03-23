@@ -61,8 +61,10 @@ def generate_journal_docx(data: dict, output_path: str) -> str:
 
 
 def _escape_xml(text: str) -> str:
-    """XML 특수문자 이스케이프."""
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    """XML 특수문자 이스케이프 + 줄바꿈 제거 (HWPX <hp:t> 내부용)."""
+    text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    text = text.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+    return text
 
 
 def _replace_fields(xml: str, data: dict) -> str:
