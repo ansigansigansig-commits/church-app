@@ -17,7 +17,7 @@ def _esc(s):
     """줄바꿈 제거 (lxml이 &/< 이스케이프는 자동 처리)."""
     if not isinstance(s, str):
         return str(s)
-    return s.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+    return s.replace("\r\n", " ").replace("\n", " ").replace("\r", "")
 
 
 def generate_journal_docx(data: dict, output_path: str) -> str:
@@ -99,11 +99,68 @@ def generate_journal_docx(data: dict, output_path: str) -> str:
                     if idx < len(all_t) and all_t[idx].text and all_t[idx].text.strip() == old_n:
                         all_t[idx].text = new_n
 
-    # === 공지사항 ===
-    for e in all_t:
-        if e.text and "1.금주일" in e.text:
-            e.text = _esc(data.get("announcements", "-"))
+    # === 공지사항 (paragraph별 줄바꿈 분배) ===
+    for tbl in root.iter():
+        if tbl.tag.split('}')[-1] != 'tbl':
+            continue
+        tbl_text = " ".join(
+            t.text for t in tbl.iter()
+            if t.tag.split('}')[-1] == 't' and t.text
+        )
+        if "공지사항" in tbl_text and "금주일" in tbl_text:
+            cells = [c for c in tbl.iter() if c.tag.split('}')[-1] == 'tc']
+            if len(cells) >= 2:
+                content_cell = cells[1]
+                # subList > p 구조에서 paragraph별로 텍스트 분배
+                sub_list = None
+                for child in content_cell:
+                    if child.tag.split('}')[-1] == 'subList':
+                        sub_list = child
+                        break
+                if sub_list is not None:
+                    paras = [p for p in sub_list if p.tag.split('}')[-1] == 'p']
+                    ann_text = data.get("announcements", "-")
+                    ann_lines = ann_text.split("\n") if ann_text else ["-"]
+                    # 빈 줄 제거
+                    ann_lines = [l for l in ann_lines if l.strip()]
+
+                    for pi, para in enumerate(paras):
+                        t_elems = [t for t in para.iter()
+                                  if t.tag.split('}')[-1] == 't']
+                        if not t_elems:
+                            continue
+                        if pi < len(ann_lines):
+                            t_elems[0].text = _esc(ann_lines[pi])
+                        else:
+                            t_elems[0].text = " "
+                        for t in t_elems[1:]:
+                            t.text = " "
+
+                    # paragraph 부족 시 마지막 줄들을 마지막 paragraph에 합침
+                    if len(ann_lines) > len(paras):
+                        last_t = [t for t in paras[-1].iter()
+                                 if t.tag.split('}')[-1] == 't']
+                        if last_t:
+                            remaining = ann_lines[len(paras)-1:]
+                            last_t[0].text = _esc(" / ".join(remaining))
             break
+
+    # === 기타 모임 ===
+    for tbl in root.iter():
+        if tbl.tag.split('}')[-1] != 'tbl':
+            continue
+        tbl_text = " ".join(
+            t.text for t in tbl.iter()
+            if t.tag.split('}')[-1] == 't' and t.text
+        )
+        if "기타 모임" in tbl_text:
+            # 실제로는 기타 모임 섹션 제목이지 테이블이 아님
+            break
+
+    # === 학습 표 ===
+    classes = data.get("study_classes", [])
+    if classes:
+        _replace_study(root, classes)
 
     # === linesegarray 전부 삭제 (텍스트 길이 변경 시 한글 렌더링 깨짐 방지) ===
     # list()로 먼저 수집 후 삭제 (순회 중 삭제 방지)
@@ -117,6 +174,95 @@ def generate_journal_docx(data: dict, output_path: str) -> str:
     section.mark_dirty()
     doc.save_to_path(str(out))
     return str(out)
+
+
+def _replace_study(root, classes):
+    """학습 표 치환. 테이블 셀(tc) 기반으로 안전하게 치환."""
+    # 학습 테이블 찾기: 부서명이 포함된 테이블
+    dept_markers = ["어린이 성경공부", "유치부"]
+    study_tables = []
+
+    for tbl in root.iter():
+        if tbl.tag.split('}')[-1] != 'tbl':
+            continue
+        tbl_text = " ".join(
+            t.text for t in tbl.iter()
+            if t.tag.split('}')[-1] == 't' and t.text
+        )
+        if any(m in tbl_text for m in dept_markers):
+            study_tables.append(tbl)
+
+    if not study_tables:
+        return
+
+    # 행 필드 매핑
+    row_map = {
+        "시간": "time", "학생": "attendees", "교사": "teacher",
+        "교재": "material", "진도": "content", "비고": "note",
+        "참석인원": "attendance_count",
+    }
+
+    for tbl_idx, tbl in enumerate(study_tables):
+        rows = [r for r in tbl if r.tag.split('}')[-1] == 'tr']
+
+        for row in rows:
+            cells = [c for c in row if c.tag.split('}')[-1] == 'tc']
+            if not cells:
+                continue
+
+            # 첫 셀의 텍스트 = 레이블
+            label_texts = [t.text.strip() for t in cells[0].iter()
+                          if t.tag.split('}')[-1] == 't' and t.text and t.text.strip()]
+            label = label_texts[0] if label_texts else ""
+
+            # 헤더 행 (부서명)
+            if not label and len(cells) > 1:
+                for col_idx, cell in enumerate(cells[1:], 0):
+                    cls_idx = tbl_idx * 5 + col_idx
+                    cls = classes[cls_idx] if cls_idx < len(classes) else None
+                    t_elems = [t for t in cell.iter() if t.tag.split('}')[-1] == 't']
+                    for t in t_elems:
+                        t.text = _esc(cls.get("department", "-")) if cls else "-"
+                continue
+
+            field = row_map.get(label)
+            if not field:
+                continue
+
+            # 데이터 셀 (col 1~5)
+            for col_idx, cell in enumerate(cells[1:], 0):
+                cls_idx = tbl_idx * 5 + col_idx
+                cls = classes[cls_idx] if cls_idx < len(classes) else None
+
+                t_elems = [t for t in cell.iter() if t.tag.split('}')[-1] == 't']
+                if not t_elems:
+                    continue
+
+                if cls:
+                    if field == "attendees":
+                        names = cls.get("attendees", [])
+                        val = _esc(", ".join(names)) if names else "-"
+                    elif field == "attendance_count":
+                        val = f"{cls.get('attendance_count', 0)}명"
+                    elif field == "note":
+                        parts = []
+                        note = cls.get("note", "")
+                        if note and note not in ("-", "없음", ""):
+                            parts.append(note)
+                        absentees = cls.get("absentees", [])
+                        if absentees:
+                            parts.append(f"결석: {cls.get('absent_count', len(absentees))}명 ({', '.join(absentees)})")
+                        val = _esc(" / ".join(parts)) if parts else "-"
+                    else:
+                        v = cls.get(field, "-")
+                        val = _esc(v) if v else "-"
+                else:
+                    val = "-"
+
+                # 첫 텍스트 노드에 값, 나머지 비움
+                t_elems[0].text = val
+                for t in t_elems[1:]:
+                    t.text = " "
 
 
 if __name__ == "__main__":
