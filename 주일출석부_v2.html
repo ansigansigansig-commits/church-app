@@ -1208,7 +1208,7 @@ function saveJournalToFirebase(triggerGenerate) {
   };
   const FB_URL = "https://sdgc-ae7f9-default-rtdb.asia-southeast1.firebasedatabase.app";
   fetch(`${FB_URL}/journal/${data.date}.json`, {
-    method:'PUT',
+    method:'PATCH',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify(journalData)
   }).then(r => {
@@ -1457,7 +1457,8 @@ async function extractJournalFromPdf() {
 주보 분석 요령:
 - date: 상단 날짜를 YYYY-MM-DD 형식으로
 - am_preacher: 담임목사 이름 (보통 "김병혁 목사"). "설교자"라는 레이블이 아니라 실제 이름!
-- am_time: "시작시간 ~ 종료시간" 형태로 (예: "10:45 ~ 13:00"). 주보의 오전예배 시간표 참고
+- am_time: 오전 예배 시작시간만 (예: "10:45"). 주보의 오전 순서표 참고
+- am_time_end: 오전 예배 마침시간 (예: "13:00"). 주보에 명시 안 되어있으면 추정
 - am_title: 강설/설교 제목 (괄호 부제 포함). 주보에서 "강설" 또는 "설교" 항목
 - am_scripture: 성경 본문 (예: "창 32:1-12")
 - am_pre: 예배전 순서 전체를 한 줄로 (예: "시편('성전에 올라가는 노래') 해설")
@@ -1466,7 +1467,8 @@ async function extractJournalFromPdf() {
 - am_sacrament: 성례 유무. 없으면 "-"
 - pm_prayer: 오후 기도 인도자 이름 + 직분 (교회공지에서 "금주일 오후 기도" 항목)
 - pm_leader: 오후 모임 인도자/강사 이름 + 직분
-- pm_time: "시작시간 ~ 종료시간" 형태로 (예: "14:45 ~ 16:30")
+- pm_time: 오후 시작시간만 (예: "14:45")
+- pm_time_end: 오후 마침시간 (예: "16:30"). 주보에 없으면 추정
 - pm_title: 오후 프로그램명 (예: "사사기 해설", "상반기 SDG 스쿨")
 - pm_scripture: 오후 본문. 없으면 "-"
 - pm_hymns: 오후 찬송 목록. 형식: "193(99편), 92(45편)"
@@ -1475,7 +1477,7 @@ async function extractJournalFromPdf() {
 
 반드시 실제 사람 이름을 넣으세요. "설교자", "인도자" 같은 레이블이 아니라 주보에 적힌 실제 이름입니다.
 
-{"date":"","am_preacher":"","am_time":"","am_title":"","am_scripture":"","am_pre":"","am_hymns":"","am_creed":"","am_sacrament":"","pm_prayer":"","pm_leader":"","pm_time":"","pm_title":"","pm_scripture":"","pm_hymns":"","pm_creed":"","announcements":""}`;
+{"date":"","am_preacher":"","am_time":"","am_time_end":"","am_title":"","am_scripture":"","am_pre":"","am_hymns":"","am_creed":"","am_sacrament":"","am_male":0,"am_female":0,"am_total":0,"pm_prayer":"","pm_leader":"","pm_time":"","pm_time_end":"","pm_title":"","pm_scripture":"","pm_hymns":"","pm_creed":"","pm_male":0,"pm_female":0,"pm_total":0,"announcements":""}`;
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: "POST",
@@ -1511,7 +1513,14 @@ async function extractJournalFromPdf() {
     if(parsed.pm_time_end&&document.getElementById('j_pm_time_end')) document.getElementById('j_pm_time_end').value=parsed.pm_time_end;
     set('j_pm_title',parsed.pm_title); set('j_pm_scripture',parsed.pm_scripture);
     set('j_pm_hymns',parsed.pm_hymns); set('j_pm_creed',parsed.pm_creed); set('j_announcements',parsed.announcements);
-    statusEl.textContent = '✓ 추출 완료! 출석 데이터도 불러오세요.';
+    // 인원수 세팅
+    if(parsed.am_male) document.getElementById('j_am_male').value = parsed.am_male;
+    if(parsed.am_female) document.getElementById('j_am_female').value = parsed.am_female;
+    if(parsed.am_total) document.getElementById('j_am_total').value = parsed.am_total;
+    if(parsed.pm_male) document.getElementById('j_pm_male').value = parsed.pm_male;
+    if(parsed.pm_female) document.getElementById('j_pm_female').value = parsed.pm_female;
+    if(parsed.pm_total) document.getElementById('j_pm_total').value = parsed.pm_total;
+    statusEl.textContent = '✓ 추출 완료! 내용을 확인하고 생성 요청하세요.';
   } catch(e) { statusEl.textContent = '⚠️ 오류: '+e.message; }
 }
 
