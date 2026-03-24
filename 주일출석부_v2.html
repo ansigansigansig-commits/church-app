@@ -1471,7 +1471,7 @@ async function extractJournalFromPdf() {
 - pm_scripture: 오후 본문. 없으면 "-"
 - pm_hymns: 오후 찬송 목록. 형식: "193(99편), 92(45편)"
 - pm_creed: 오후 신앙고백. 없으면 "-"
-- announcements: 공지사항 전체 내용. 줄바꿈(\\n)으로 구분
+- announcements: 공지사항 전체 내용. 각 항목을 줄바꿈(\\n)으로 구분. JSON 문자열 안에서 줄바꿈은 반드시 \\n으로 이스케이프. 큰따옴표는 \\"로 이스케이프.
 
 반드시 실제 사람 이름을 넣으세요. "설교자", "인도자" 같은 레이블이 아니라 주보에 적힌 실제 이름입니다.
 
@@ -1490,8 +1490,16 @@ async function extractJournalFromPdf() {
     });
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
-    const text = data.candidates[0].content.parts[0].text;
-    const parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
+    let text = data.candidates[0].content.parts[0].text;
+    text = text.replace(/```json|```/g,'').trim();
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch(e) {
+      // JSON 파싱 실패 시 줄바꿈/특수문자 정리 후 재시도
+      text = text.replace(/[\x00-\x1f]/g, (c) => c === '\n' ? '\\n' : c === '\t' ? '\\t' : '');
+      parsed = JSON.parse(text);
+    }
     const set = (id,val) => { if(val&&val!=='-'&&document.getElementById(id)) document.getElementById(id).value=val; };
     set('j_date',parsed.date); set('j_am_preacher',parsed.am_preacher);
     if(parsed.am_time&&document.getElementById('j_am_time_start')) document.getElementById('j_am_time_start').value=parsed.am_time;
