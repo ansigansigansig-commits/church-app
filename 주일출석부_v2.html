@@ -1200,12 +1200,15 @@ function saveJournalToFirebase(triggerGenerate) {
   if (!data.date) { alert('날짜를 먼저 선택해주세요.'); return; }
   const journalData = {
     ...data,
-    study_classes: kakaoStudyData ? kakaoStudyData.classes : [],
     kakao_raw: document.getElementById('j_kakao_text').value,
     generate_requested: !!triggerGenerate,
     generated: false,
     updated_at: new Date().toISOString()
   };
+  // 카카오 파싱 결과가 있을 때만 study_classes 전송 (기존 데이터 보존)
+  if (kakaoStudyData && kakaoStudyData.classes && kakaoStudyData.classes.length > 0) {
+    journalData.study_classes = kakaoStudyData.classes;
+  }
   const FB_URL = "https://sdgc-ae7f9-default-rtdb.asia-southeast1.firebasedatabase.app";
   fetch(`${FB_URL}/journal/${data.date}.json`, {
     method:'PATCH',
