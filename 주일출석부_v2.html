@@ -9,173 +9,757 @@
 <title>주일출석부</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet" />
 <style>
+  :root {
+    --primary: #2D5A3D;
+    --primary-50: #F0F7F2;
+    --primary-100: #DCE9E0;
+    --primary-200: #B4D4BC;
+    --primary-500: #3D7A52;
+    --primary-600: #2D5A3D;
+    --primary-700: #1F4029;
+    --accent: #D4A853;
+    --accent-light: #FBF5E6;
+    --danger: #E25C5C;
+    --danger-light: #FEF2F2;
+    --text: #111827;
+    --text-2: #6B7280;
+    --text-3: #9CA3AF;
+    --bg: #F3F4F6;
+    --card: #FFFFFF;
+    --border: #E5E7EB;
+    --border-light: #F3F4F6;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-full: 9999px;
+    --nav-h: 82px;
+    --header-h: 56px;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { font-family: 'Pretendard Variable', 'Pretendard', sans-serif; background: linear-gradient(135deg, #FFF8F0 0%, #FFF0F5 50%, #F0F4FF 100%); min-height: 100vh; max-width: 480px; margin: 0 auto; }
 
-  /* Header */
-  .header { background: linear-gradient(135deg, #6B8F71 0%, #4A6741 100%); padding: 48px 20px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(74,103,65,0.3); }
-  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .header-subtitle { color: #F0D78C; font-size: 11px; font-weight: 700; letter-spacing: 2px; margin-bottom: 3px; }
-  .header-title { color: #fff; font-size: 18px; font-weight: 700; }
+  body {
+    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    background: var(--card);
+    padding: 0 20px;
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border);
+  }
   .header-mascot { display: flex; align-items: center; gap: 10px; }
-  .save-badge { background: #F0D78C; color: #5A4A1A; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; opacity: 0; transition: opacity 0.3s; }
+  .header-subtitle { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; }
+  .header-title { color: var(--text); font-size: 17px; font-weight: 800; }
+  .header-badges { display: flex; gap: 6px; align-items: center; }
+  .save-badge {
+    background: var(--primary-100);
+    color: var(--primary);
+    border-radius: var(--radius-full);
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
   .save-badge.show { opacity: 1; }
-  .sync-badge { background: #5B8FA8; color: #fff; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
-  .nav { display: flex; }
-  .nav-btn { flex: 1; background: none; border: none; padding: 12px 0; color: rgba(255,255,255,0.5); font-family: inherit; font-size: 13px; font-weight: 400; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
-  .nav-btn.active { color: #fff; font-weight: 700; border-bottom-color: #F0D78C; }
+  .sync-badge {
+    background: var(--primary);
+    color: #fff;
+    border-radius: var(--radius-full);
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
 
-  /* Views */
-  .view { display: none; }
-  .view.active { display: block; }
+  /* ===== Bottom Navigation ===== */
+  .nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 100;
+    padding-bottom: var(--safe-b);
+    height: var(--nav-h);
+  }
+  .nav-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 8px 0 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-3);
+    transition: color 0.2s;
+  }
+  .nav-btn .nav-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-btn .nav-icon svg { transition: all 0.2s; }
+  .nav-btn.active { color: var(--primary); font-weight: 700; }
+  .nav-btn.active .nav-icon svg { stroke: var(--primary); fill: var(--primary-100); }
+  .nav-btn:active { opacity: 0.6; }
 
-  /* Date bar */
-  .date-bar { background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.5); padding: 14px 20px; }
+  /* ===== Views ===== */
+  .view { display: none; padding-bottom: calc(var(--nav-h) + 12px); }
+  .view.active { display: block; animation: viewFadeIn 0.25s ease; }
+  @keyframes viewFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ===== Date Bar ===== */
+  .date-bar { background: var(--card); padding: 14px 20px; border-bottom: 1px solid var(--border); }
   .date-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
-  .date-btn { flex: 1; background: rgba(255,255,255,0.6); border: 1px solid rgba(200,190,175,0.3); border-radius: 12px; padding: 10px 14px; text-align: left; cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 700; color: #2D2A25; transition: all 0.2s; }
-  .date-btn:active { transform: scale(0.97); }
-  .session-toggle { display: flex; background: rgba(255,255,255,0.5); border-radius: 12px; border: 1px solid rgba(200,190,175,0.3); overflow: hidden; }
-  .session-btn { padding: 10px 18px; background: none; color: #8B8378; border: none; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 400; transition: all 0.25s; }
-  .session-btn.active { background: linear-gradient(135deg, #6B8F71, #4A6741); color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(74,103,65,0.3); }
-  .date-picker { background: rgba(255,255,255,0.5); border-radius: 12px; padding: 12px; margin-bottom: 8px; }
+  .date-btn {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    transition: all 0.15s;
+  }
+  .date-btn:active { transform: scale(0.98); background: var(--border-light); }
+  .session-toggle {
+    display: flex;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    padding: 2px;
+    gap: 2px;
+  }
+  .session-btn {
+    padding: 8px 16px;
+    background: none;
+    color: var(--text-2);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .session-btn.active {
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: var(--shadow-sm);
+  }
+  .date-picker { background: var(--bg); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; }
   .date-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-  .date-chip { padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(200,190,175,0.3); background: rgba(255,255,255,0.6); color: #2D2A25; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 400; transition: all 0.2s; }
-  .date-chip.active { border-color: #4A6741; background: linear-gradient(135deg, #6B8F71, #4A6741); color: #fff; font-weight: 700; }
+  .date-chip {
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .date-chip.active { border-color: var(--primary); background: var(--primary); color: #fff; font-weight: 700; }
   .custom-date-row { display: flex; gap: 8px; }
-  .custom-date-input { flex: 1; padding: 8px 12px; border: 1px solid rgba(200,190,175,0.3); border-radius: 10px; font-family: inherit; font-size: 13px; color: #2D2A25; background: rgba(255,255,255,0.6); }
-  .custom-date-confirm { padding: 8px 14px; background: linear-gradient(135deg, #6B8F71, #4A6741); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; }
-  .summary-bar { display: flex; gap: 8px; align-items: center; }
-  .badge { border-radius: 20px; padding: 3px 10px; font-size: 13px; }
-  .badge-total { background: linear-gradient(135deg, #6B8F71, #4A6741); color: #fff; font-weight: 700; }
-  .badge-male { background: rgba(107,143,113,0.12); color: #4A6741; }
-  .badge-female { background: rgba(160,82,122,0.1); color: #A0527A; }
-  .all-btn { margin-left: auto; padding: 4px 12px; background: none; border: 1.5px solid #F0D78C; border-radius: 20px; color: #B8941E; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+  .custom-date-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--card);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .custom-date-input:focus { border-color: var(--primary); }
+  .custom-date-confirm {
+    padding: 8px 14px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .summary-bar { display: flex; gap: 6px; align-items: center; }
+  .badge { border-radius: var(--radius-full); padding: 4px 10px; font-size: 12px; font-weight: 600; }
+  .badge-total { background: var(--primary); color: #fff; }
+  .badge-male { background: var(--primary-50); color: var(--primary); }
+  .badge-female { background: #FDF2F8; color: #A0527A; }
+  .all-btn {
+    margin-left: auto;
+    padding: 5px 12px;
+    background: none;
+    border: 1.5px solid var(--primary-200);
+    border-radius: var(--radius-full);
+    color: var(--primary-500);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
   .all-btn:active { transform: scale(0.95); }
+  .all-btn-danger { border-color: #FECACA; color: var(--danger); }
 
-  /* Filter */
-  .filter-bar { padding: 12px 20px 0; display: flex; gap: 8px; align-items: center; }
-  .search-input { flex: 1; padding: 8px 14px; border: 1px solid rgba(200,190,175,0.3); border-radius: 20px; font-family: inherit; font-size: 13px; background: rgba(255,255,255,0.7); color: #2D2A25; outline: none; backdrop-filter: blur(10px); transition: all 0.2s; }
-  .search-input:focus { border-color: #6B8F71; box-shadow: 0 0 0 3px rgba(107,143,113,0.1); }
-  .filter-btn { padding: 7px 12px; border-radius: 20px; border: 1px solid rgba(200,190,175,0.3); background: rgba(255,255,255,0.6); color: #8B8378; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 400; transition: all 0.2s; }
-  .filter-btn.active { border-color: #4A6741; background: linear-gradient(135deg, #6B8F71, #4A6741); color: #fff; font-weight: 700; }
+  /* ===== Filter ===== */
+  .filter-bar { padding: 12px 20px 4px; display: flex; gap: 8px; align-items: center; }
+  .search-input {
+    flex: 1;
+    padding: 9px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--card);
+    color: var(--text);
+    outline: none;
+    transition: all 0.2s;
+  }
+  .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-100); }
+  .filter-btn {
+    padding: 7px 12px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-2);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .filter-btn.active { border-color: var(--primary); background: var(--primary); color: #fff; font-weight: 700; }
 
-  /* Member list */
-  .member-list { padding: 10px 20px 120px; }
-  .member-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-bottom: 8px; border-radius: 16px; background: rgba(255,255,255,0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1.5px solid rgba(255,255,255,0.6); cursor: pointer; transition: all 0.2s ease; user-select: none; -webkit-user-select: none; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  /* ===== Member List ===== */
+  .member-list { padding: 8px 16px 0; }
+  .member-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    border-radius: var(--radius);
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    box-shadow: var(--shadow-sm);
+  }
   .member-item:active { transform: scale(0.98); }
-  .member-item.present { background: rgba(238,243,237,0.8); border-color: rgba(107,143,113,0.4); box-shadow: 0 2px 12px rgba(74,103,65,0.1); }
-  .member-item.absent { background: rgba(255,240,240,0.8); border-color: rgba(232,180,180,0.5); }
-  .member-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #F5EDE3, #E5DDD3); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; transition: all 0.25s; overflow: hidden; }
-  .member-item.present .member-avatar { background: linear-gradient(135deg, #7BAF73, #4A6741); box-shadow: 0 2px 8px rgba(74,103,65,0.25); }
-  .member-item.absent .member-avatar { background: linear-gradient(135deg, #F0C0C0, #E8A0A0); }
-  .member-info { flex: 1; }
-  .member-name { font-size: 15px; font-weight: 500; color: #2D2A25; transition: all 0.2s; }
-  .member-item.present .member-name { font-weight: 700; color: #3D6B35; }
-  .member-item.absent .member-name { color: #C0392B; }
-  .member-reason { font-size: 12px; color: #C0392B; margin-top: 2px; }
-  .other-session { font-size: 11px; margin-top: 2px; color: #999; }
-  .other-session .os-present { color: #4A6741; font-weight: 600; }
-  .other-session .os-absent { color: #C0392B; font-weight: 600; }
-  .gender-tag { font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 500; }
-  .gender-m { background: rgba(107,143,113,0.1); color: #4A6741; }
-  .gender-f { background: rgba(160,82,122,0.08); color: #A0527A; }
-
-  /* Cat SVG */
+  .member-item.present {
+    background: var(--primary-50);
+    border-color: var(--primary-200);
+    box-shadow: 0 0 0 1px var(--primary-100);
+  }
+  .member-item.absent { background: var(--danger-light); border-color: #FECACA; }
+  .member-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.25s;
+    overflow: hidden;
+  }
+  .member-item.present .member-avatar { background: var(--primary-200); }
+  .member-item.absent .member-avatar { background: #FECACA; }
+  .member-info { flex: 1; min-width: 0; }
+  .member-name { font-size: 14px; font-weight: 500; color: var(--text); transition: all 0.2s; }
+  .member-item.present .member-name { font-weight: 700; color: var(--primary-700); }
+  .member-item.absent .member-name { color: var(--danger); font-weight: 600; }
+  .member-reason { font-size: 11px; color: var(--danger); margin-top: 2px; }
+  .other-session { font-size: 11px; margin-top: 2px; color: var(--text-3); }
+  .other-session .os-present { color: var(--primary); font-weight: 600; }
+  .other-session .os-absent { color: var(--danger); font-weight: 600; }
+  .gender-tag { font-size: 10px; padding: 3px 8px; border-radius: var(--radius-full); font-weight: 600; }
+  .gender-m { background: var(--primary-50); color: var(--primary); }
+  .gender-f { background: #FDF2F8; color: #A0527A; }
   .cat-svg { width: 26px; height: 26px; }
 
-  /* Stats */
-  .stats-container { padding: 20px; }
-  .section-title { font-weight: 700; font-size: 16px; color: #2D2A25; margin-bottom: 16px; }
-  .stat-item { background: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; border: 1px solid #E8E2D9; }
+  /* ===== Stats ===== */
+  .stats-container { padding: 16px; }
+  .section-title { font-weight: 800; font-size: 18px; color: var(--text); margin-bottom: 16px; }
+  .stat-item {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
   .stat-header { display: flex; align-items: center; margin-bottom: 8px; }
-  .stat-name { font-weight: 600; font-size: 15px; color: #2D2A25; flex: 1; }
-  .stat-count { font-size: 12px; color: #8B8378; margin-right: 8px; }
-  .stat-rate { font-weight: 700; font-size: 14px; }
-  .stat-bar { height: 6px; background: #E5E0D8; border-radius: 3px; overflow: hidden; }
-  .stat-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
-  .stat-reasons { margin-top: 6px; font-size: 11px; color: #8B8378; }
+  .stat-name { font-weight: 600; font-size: 14px; color: var(--text); flex: 1; }
+  .stat-count { font-size: 12px; color: var(--text-2); margin-right: 8px; }
+  .stat-rate { font-weight: 800; font-size: 14px; }
+  .stat-bar { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+  .stat-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+  .stat-reasons { margin-top: 6px; font-size: 11px; color: var(--text-3); }
 
-  /* Members manage */
-  .members-container { padding: 20px; }
+  /* ===== Members Manage ===== */
+  .members-container { padding: 16px; }
   .members-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .add-btn { background: #4A6741; color: #fff; border: none; border-radius: 20px; padding: 8px 16px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; }
-  .manage-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin-bottom: 6px; background: #fff; border-radius: 12px; border: 1px solid #E8E2D9; }
-  .remove-btn { background: none; border: none; color: #8B8378; cursor: pointer; font-size: 20px; padding: 0 4px; line-height: 1; }
+  .add-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-full);
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    transition: opacity 0.15s;
+  }
+  .add-btn:active { opacity: 0.8; }
+  .manage-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .manage-item-name { flex: 1; font-size: 14px; font-weight: 500; color: var(--text); }
+  .remove-btn {
+    background: none;
+    border: none;
+    color: var(--text-3);
+    cursor: pointer;
+    font-size: 20px;
+    padding: 0 4px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .remove-btn:active { color: var(--danger); }
 
-  /* Settings */
-  .settings-container { padding: 20px; }
-  .settings-card { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px; border: 1px solid #E8E2D9; }
-  .settings-label { font-size: 12px; color: #8B8378; font-weight: 600; margin-bottom: 8px; letter-spacing: 0.5px; }
-  .settings-title { font-size: 15px; font-weight: 700; color: #2D2A25; margin-bottom: 4px; }
-  .settings-desc { font-size: 13px; color: #8B8378; margin-bottom: 12px; line-height: 1.5; }
-  .url-input { width: 100%; padding: 10px 12px; border: 1px solid #E8E2D9; border-radius: 8px; font-family: inherit; font-size: 13px; color: #2D2A25; background: #F7F4EF; }
-  .url-input:focus { outline: none; border-color: #4A6741; }
-  .save-url-btn { margin-top: 10px; width: 100%; padding: 12px; background: #4A6741; color: #fff; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 700; }
-  .connected-badge { display: inline-flex; align-items: center; gap: 6px; background: #EEF3ED; color: #4A6741; border-radius: 20px; padding: 4px 12px; font-size: 13px; font-weight: 600; margin-top: 8px; }
-  .sync-btn { width: 100%; padding: 12px; background: #5B8FA8; color: #fff; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 700; margin-top: 8px; }
+  /* ===== Settings ===== */
+  .settings-container { padding: 16px; }
+  .settings-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .settings-label {
+    font-size: 11px;
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .settings-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .settings-desc { font-size: 13px; color: var(--text-2); margin-bottom: 12px; line-height: 1.5; }
+  .url-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .url-input:focus { border-color: var(--primary); }
+  .save-url-btn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    transition: opacity 0.15s;
+  }
+  .save-url-btn:active { opacity: 0.85; }
+  .connected-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--primary-50);
+    color: var(--primary);
+    border-radius: var(--radius-full);
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  .sync-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    margin-top: 8px;
+    transition: opacity 0.15s;
+  }
+  .sync-btn:active { opacity: 0.85; }
 
-  /* Modal */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  /* ===== Journal Form Fields ===== */
+  .form-group { margin-bottom: 10px; }
+  .form-label { font-size: 11px; color: var(--text-2); margin-bottom: 4px; font-weight: 500; }
+  .form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .form-col { flex: 1; }
+  .form-col-2 { flex: 2; }
+  .form-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--primary); }
+  .form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.2s;
+  }
+  .form-textarea:focus { border-color: var(--primary); }
+
+  /* Attendance number boxes */
+  .att-grid { display: flex; gap: 8px; margin-top: 12px; }
+  .att-box {
+    flex: 1;
+    background: var(--primary-50);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    text-align: center;
+  }
+  .att-box-total { background: var(--primary); }
+  .att-box-label { font-size: 11px; color: var(--text-2); margin-bottom: 2px; }
+  .att-box-total .att-box-label { color: rgba(255,255,255,0.7); }
+  .att-box input {
+    width: 100%;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--primary);
+    background: none;
+    border: none;
+    outline: none;
+    font-family: inherit;
+  }
+  .att-box-total input { color: #fff; }
+
+  /* Section divider in journal */
+  .journal-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 14px 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Action buttons in journal */
+  .action-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .btn-primary {
+    flex: 1;
+    padding: 14px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    transition: opacity 0.15s;
+  }
+  .btn-primary:active { opacity: 0.85; }
+  .btn-secondary {
+    flex: 1;
+    padding: 12px;
+    background: var(--bg);
+    color: var(--text-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    transition: opacity 0.15s;
+  }
+  .btn-secondary:active { opacity: 0.85; }
+  .btn-accent {
+    flex: 1;
+    padding: 12px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    transition: opacity 0.15s;
+  }
+  .btn-accent:active { opacity: 0.85; }
+  .btn-danger {
+    flex: 1;
+    padding: 12px;
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    transition: opacity 0.15s;
+  }
+  .btn-danger:active { opacity: 0.85; }
+
+  /* ===== Modal ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
   .modal-overlay.show { opacity: 1; pointer-events: all; }
-  .modal { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 24px 24px 0 0; padding: 24px; width: 100%; max-width: 480px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+  .modal {
+    background: var(--card);
+    border-radius: 20px 20px 0 0;
+    padding: 24px;
+    padding-bottom: calc(24px + var(--safe-b));
+    width: 100%;
+    max-width: 480px;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
   .modal-overlay.show .modal { transform: translateY(0); }
-  .modal-title { font-weight: 700; font-size: 16px; color: #2D2A25; margin-bottom: 4px; }
-  .modal-sub { color: #8B8378; font-size: 13px; margin-bottom: 20px; }
+  .modal-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+  .modal-title { font-weight: 800; font-size: 17px; color: var(--text); margin-bottom: 4px; }
+  .modal-sub { color: var(--text-2); font-size: 13px; margin-bottom: 20px; }
   .reason-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-  .reason-chip { padding: 8px 16px; border-radius: 20px; border: 1.5px solid #E8E2D9; background: #fff; color: #2D2A25; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 400; transition: all 0.2s; }
-  .reason-chip.active { border-color: #4A6741; background: #4A6741; color: #fff; font-weight: 700; }
-  .custom-input { width: 100%; padding: 10px 14px; border: 1px solid #E8E2D9; border-radius: 10px; font-family: inherit; font-size: 14px; margin-bottom: 16px; color: #2D2A25; }
-  .modal-actions { display: flex; gap: 10px; }
-  .modal-cancel { flex: 1; padding: 14px; background: #F7F4EF; border: none; border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 15px; color: #8B8378; font-weight: 600; }
-  .modal-confirm { flex: 2; padding: 14px; background: #E85C5C; border: none; border-radius: 12px; cursor: pointer; font-family: inherit; font-size: 15px; color: #fff; font-weight: 700; }
-  .modal-confirm-green { background: #4A6741; }
-  .modal-input { width: 100%; padding: 12px 14px; border: 1px solid #E8E2D9; border-radius: 10px; font-family: inherit; font-size: 15px; margin-bottom: 12px; color: #2D2A25; }
-  .gender-btns { display: flex; gap: 10px; margin-bottom: 20px; }
-  .gender-btn { flex: 1; padding: 12px; border-radius: 10px; border: 1.5px solid #E8E2D9; background: #fff; color: #2D2A25; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 700; transition: all 0.2s; }
-  .gender-btn.active { border-color: #4A6741; background: #4A6741; color: #fff; }
+  .reason-chip {
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .reason-chip.active { border-color: var(--primary); background: var(--primary); color: #fff; font-weight: 700; }
+  .custom-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 14px;
+    margin-bottom: 16px;
+    color: var(--text);
+    outline: none;
+  }
+  .custom-input:focus { border-color: var(--primary); }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-cancel {
+    flex: 1;
+    padding: 14px;
+    background: var(--bg);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-2);
+    font-weight: 600;
+    transition: opacity 0.15s;
+  }
+  .modal-cancel:active { opacity: 0.8; }
+  .modal-confirm {
+    flex: 2;
+    padding: 14px;
+    background: var(--danger);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    color: #fff;
+    font-weight: 700;
+    transition: opacity 0.15s;
+  }
+  .modal-confirm:active { opacity: 0.85; }
+  .modal-confirm-green { background: var(--primary); }
+  .modal-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 15px;
+    margin-bottom: 12px;
+    color: var(--text);
+    outline: none;
+  }
+  .modal-input:focus { border-color: var(--primary); }
+  .gender-btns { display: flex; gap: 8px; margin-bottom: 20px; }
+  .gender-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.15s;
+  }
+  .gender-btn.active { border-color: var(--primary); background: var(--primary); color: #fff; }
 
-  .empty-state { text-align: center; padding: 40px; color: #8B8378; }
-  .loading-spinner { text-align: center; padding: 60px 20px; color: #8B8378; font-size: 14px; }
+  .empty-state { text-align: center; padding: 40px; color: var(--text-3); }
+  .loading-spinner { text-align: center; padding: 60px 20px; color: var(--text-3); font-size: 14px; }
+
+  /* Kakao result cards */
+  .kakao-card {
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .kakao-dept { font-weight: 700; color: var(--primary); margin-bottom: 6px; font-size: 14px; }
+  .kakao-detail { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+  .kakao-absent { color: var(--danger); }
+
+  /* Excel date range */
+  .excel-range-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .excel-range-col { flex: 1; }
+  .excel-range-label { font-size: 11px; color: var(--text-3); margin-bottom: 4px; }
+  .excel-range-sep { padding-top: 16px; color: var(--text-3); }
 </style>
 </head>
 <body>
 
 <!-- Header -->
 <div class="header">
-  <div class="header-top">
-    <div class="header-mascot">
-      <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M25 30 L30 10 L40 28 Z" fill="#F0D78C"/>
-        <path d="M75 30 L70 10 L60 28 Z" fill="#F0D78C"/>
-        <circle cx="50" cy="50" r="28" fill="#F0D78C"/>
-        <circle cx="40" cy="44" r="4" fill="#2D2A25"/>
-        <circle cx="60" cy="44" r="4" fill="#2D2A25"/>
-        <circle cx="41" cy="43" r="1.5" fill="#fff"/>
-        <circle cx="61" cy="43" r="1.5" fill="#fff"/>
-        <ellipse cx="50" cy="54" rx="3" ry="2" fill="#E8A0A0"/>
-        <path d="M47 56 Q50 60 53 56" stroke="#2D2A25" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <path d="M30 50 L15 47" stroke="#F0D78C" stroke-width="2" stroke-linecap="round"/>
-        <path d="M30 53 L16 55" stroke="#F0D78C" stroke-width="2" stroke-linecap="round"/>
-        <path d="M70 50 L85 47" stroke="#F0D78C" stroke-width="2" stroke-linecap="round"/>
-        <path d="M70 53 L84 55" stroke="#F0D78C" stroke-width="2" stroke-linecap="round"/>
-        <path d="M38 70 Q50 80 62 70" stroke="#F0D78C" stroke-width="8" fill="none" stroke-linecap="round"/>
-      </svg>
-      <div>
-        <div class="header-subtitle">SOLI DEO GLORIA</div>
-        <div class="header-title">주일 출석부</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <span class="sync-badge" id="syncBadge" style="display:none">🔄 동기화 중</span>
-      <span class="save-badge" id="saveBadge">✓ 저장됨</span>
+  <div class="header-mascot">
+    <svg width="34" height="34" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M25 30 L30 10 L40 28 Z" fill="#D4A853"/>
+      <path d="M75 30 L70 10 L60 28 Z" fill="#D4A853"/>
+      <circle cx="50" cy="50" r="28" fill="#D4A853"/>
+      <circle cx="40" cy="44" r="4" fill="#2D2A25"/>
+      <circle cx="60" cy="44" r="4" fill="#2D2A25"/>
+      <circle cx="41" cy="43" r="1.5" fill="#fff"/>
+      <circle cx="61" cy="43" r="1.5" fill="#fff"/>
+      <ellipse cx="50" cy="54" rx="3" ry="2" fill="#E8A0A0"/>
+      <path d="M47 56 Q50 60 53 56" stroke="#2D2A25" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M30 50 L15 47" stroke="#D4A853" stroke-width="2" stroke-linecap="round"/>
+      <path d="M30 53 L16 55" stroke="#D4A853" stroke-width="2" stroke-linecap="round"/>
+      <path d="M70 50 L85 47" stroke="#D4A853" stroke-width="2" stroke-linecap="round"/>
+      <path d="M70 53 L84 55" stroke="#D4A853" stroke-width="2" stroke-linecap="round"/>
+      <path d="M38 70 Q50 80 62 70" stroke="#D4A853" stroke-width="8" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="header-subtitle">SOLI DEO GLORIA</div>
+      <div class="header-title">주일 출석부</div>
     </div>
   </div>
-  <div class="nav">
-    <button class="nav-btn active" onclick="switchView('attendance')">출석 입력</button>
-    <button class="nav-btn" onclick="switchView('journal')">일지</button>
-    <button class="nav-btn" onclick="switchView('members')">명단</button>
-    <button class="nav-btn" onclick="switchView('stats')">통계</button>
-    <button class="nav-btn" onclick="switchView('settings')">설정</button>
+  <div class="header-badges">
+    <span class="sync-badge" id="syncBadge" style="display:none"></span>
+    <span class="save-badge" id="saveBadge"></span>
   </div>
 </div>
 
@@ -183,7 +767,7 @@
 <div class="view active" id="view-attendance">
   <div class="date-bar">
     <div class="date-row">
-      <button class="date-btn" id="dateBtn" onclick="toggleDatePicker()">📅 <span id="selectedDateLabel"></span> ▾</button>
+      <button class="date-btn" id="dateBtn" onclick="toggleDatePicker()"><span id="selectedDateLabel"></span> ▾</button>
       <div class="session-toggle">
         <button class="session-btn active" id="btn-오전" onclick="setSession('오전')">오전</button>
         <button class="session-btn" id="btn-오후" onclick="setSession('오후')">오후</button>
@@ -201,8 +785,7 @@
       <span class="badge badge-male">남 <span id="maleCount">0</span></span>
       <span class="badge badge-female">여 <span id="femaleCount">0</span></span>
       <button class="all-btn" onclick="markAllPresent()">전체 출석</button>
-      <button class="all-btn" style="border-color:#E85C5C;color:#E85C5C" onclick="clearSession()">전체 취소</button>
-
+      <button class="all-btn all-btn-danger" onclick="clearSession()">초기화</button>
     </div>
   </div>
   <div class="filter-bar">
@@ -248,9 +831,9 @@
       <div class="settings-label">수동 동기화</div>
       <div class="settings-title">구글 시트로 전체 내보내기</div>
       <div class="settings-desc">현재 앱의 모든 데이터를 구글 시트에 한 번에 동기화합니다.</div>
-      <div style="display:flex;gap:8px">
-        <button class="sync-btn" style="flex:1" onclick="syncToSheets()">☁️ Sheets에 저장</button>
-        <button class="sync-btn" style="flex:1;background:#1E6B3C" onclick="syncFromSheets()">📥 Sheets에서 불러오기</button>
+      <div class="action-row" style="margin-top:0">
+        <button class="sync-btn" style="flex:1;margin-top:0" onclick="syncToSheets()">Sheets에 저장</button>
+        <button class="sync-btn" style="flex:1;margin-top:0;background:var(--primary-700)" onclick="syncFromSheets()">Sheets에서 불러오기</button>
       </div>
     </div>
     <div class="settings-card">
@@ -258,10 +841,10 @@
       <div class="settings-title">주보 자동 추출용 (무료)</div>
       <div class="settings-desc">일지 탭에서 주보 PDF 자동 추출에 사용돼요. 한 번만 입력하면 저장됩니다.</div>
       <div style="display:flex;gap:8px;margin-top:8px">
-        <input type="password" id="apiKeyInput" class="custom-date-input" style="flex:1;background:#F7F4EF" placeholder="AIzaSy..." />
+        <input type="password" id="apiKeyInput" class="form-input" style="flex:1" placeholder="AIzaSy..." />
         <button class="sync-btn" style="width:auto;padding:0 16px;margin-top:0" onclick="saveApiKey()">저장</button>
       </div>
-      <div id="apiKeyStatus" style="font-size:12px;margin-top:6px;color:#4A6741"></div>
+      <div id="apiKeyStatus" style="font-size:12px;margin-top:6px;color:var(--primary)"></div>
     </div>
 
     <div class="settings-card">
@@ -273,18 +856,18 @@
         <button class="filter-btn" onclick="setExcelRange('lastmonth',this)">저번달</button>
         <button class="filter-btn active" onclick="setExcelRange('all',this)">전체</button>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-        <div style="flex:1">
-          <div style="font-size:11px;color:#8B8378;margin-bottom:4px">시작일</div>
-          <input type="date" id="excelFrom" class="custom-date-input" style="width:100%;background:#F7F4EF" />
+      <div class="excel-range-row">
+        <div class="excel-range-col">
+          <div class="excel-range-label">시작일</div>
+          <input type="date" id="excelFrom" class="form-input" />
         </div>
-        <div style="padding-top:16px;color:#8B8378">~</div>
-        <div style="flex:1">
-          <div style="font-size:11px;color:#8B8378;margin-bottom:4px">종료일</div>
-          <input type="date" id="excelTo" class="custom-date-input" style="width:100%;background:#F7F4EF" />
+        <div class="excel-range-sep">~</div>
+        <div class="excel-range-col">
+          <div class="excel-range-label">종료일</div>
+          <input type="date" id="excelTo" class="form-input" />
         </div>
       </div>
-      <button class="sync-btn" style="background:#217346" onclick="downloadExcel()">📊 엑셀 다운로드</button>
+      <button class="sync-btn" style="background:#217346" onclick="downloadExcel()">엑셀 다운로드</button>
     </div>
   </div>
 </div>
@@ -296,161 +879,234 @@
     <div class="settings-card">
       <div class="settings-label">주보 업로드</div>
       <div class="settings-title">PDF 자동 추출</div>
-      <div class="settings-desc">주보 PDF를 올리면 설교제목·찬송·공지 등을 자동으로 채워드려요.</div>
+      <div class="settings-desc">주보 PDF를 올리면 설교제목, 찬송, 공지 등을 자동으로 채워드려요.</div>
       <input type="file" id="journalPdfInput" accept=".pdf" style="display:none" onchange="handleJournalPdf(this)" />
-      <button class="sync-btn" style="background:#C8A45A" onclick="document.getElementById('journalPdfInput').click()">📄 주보 PDF 업로드</button>
-      <div id="journalPdfName" style="font-size:12px;color:#4A6741;margin-top:6px"></div>
-      <button class="sync-btn" id="journalExtractBtn" style="display:none;margin-top:8px" onclick="extractJournalFromPdf()">🔍 자동 추출</button>
-      <div id="journalExtractStatus" style="font-size:12px;margin-top:6px;color:#4A6741"></div>
+      <button class="btn-accent" style="width:100%" onclick="document.getElementById('journalPdfInput').click()">주보 PDF 업로드</button>
+      <div id="journalPdfName" style="font-size:12px;color:var(--primary);margin-top:6px"></div>
+      <button class="sync-btn" id="journalExtractBtn" style="display:none;margin-top:8px" onclick="extractJournalFromPdf()">자동 추출</button>
+      <div id="journalExtractStatus" style="font-size:12px;margin-top:6px;color:var(--primary)"></div>
     </div>
 
     <div class="settings-card">
       <div class="settings-label">기본 정보</div>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <div style="flex:1"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">날짜</div>
-          <input type="date" id="j_date" class="custom-date-input" style="width:100%;background:#F7F4EF"/></div>
-        <div style="flex:1"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">작성자</div>
-          <input type="text" id="j_author" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="문지영"/></div>
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-label">날짜</div>
+          <input type="date" id="j_date" class="form-input"/>
+        </div>
+        <div class="form-col">
+          <div class="form-label">작성자</div>
+          <input type="text" id="j_author" class="form-input" placeholder="문지영"/>
+        </div>
       </div>
-      <button class="sync-btn" style="background:#4A6741" onclick="loadAttendanceToJournal()">📊 출석 데이터 불러오기</button>
-      <div id="journalAttLoaded" style="font-size:12px;color:#4A6741;margin-top:6px"></div>
+      <button class="btn-primary" style="width:100%;padding:12px" onclick="loadAttendanceToJournal()">출석 데이터 불러오기</button>
+      <div id="journalAttLoaded" style="font-size:12px;color:var(--primary);margin-top:6px"></div>
     </div>
 
     <div class="settings-card">
       <div class="settings-label">오전 예배</div>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <div style="flex:1"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">설교자</div>
-          <input type="text" id="j_am_preacher" class="custom-date-input" style="width:100%;background:#F7F4EF" value="김병혁 목사"/></div>
-        <div style="flex:1"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">시작</div>
-          <input type="text" id="j_am_time_start" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="11:00"/></div>
-        <div style="flex:1"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">마침</div>
-          <input type="text" id="j_am_time_end" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="13:00"/></div>
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-label">설교자</div>
+          <input type="text" id="j_am_preacher" class="form-input" value="김병혁 목사"/>
+        </div>
+        <div class="form-col">
+          <div class="form-label">시작</div>
+          <input type="text" id="j_am_time_start" class="form-input" placeholder="11:00"/>
+        </div>
+        <div class="form-col">
+          <div class="form-label">마침</div>
+          <input type="text" id="j_am_time_end" class="form-input" placeholder="13:00"/>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <div style="flex:2"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">설교 제목</div>
-          <input type="text" id="j_am_title" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="설교 제목"/></div>
-        <div style="flex:1"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">본문</div>
-          <input type="text" id="j_am_scripture" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="창 29:31"/></div>
+      <div class="form-row">
+        <div class="form-col-2">
+          <div class="form-label">설교 제목</div>
+          <input type="text" id="j_am_title" class="form-input" placeholder="설교 제목"/>
+        </div>
+        <div class="form-col">
+          <div class="form-label">본문</div>
+          <input type="text" id="j_am_scripture" class="form-input" placeholder="창 29:31"/>
+        </div>
       </div>
-      <div style="margin-bottom:8px"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">예배전 순서</div>
-        <input type="text" id="j_am_pre" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="시편('성전에 올라가는 노래') 해설"/></div>
-      <div style="margin-bottom:8px"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">찬송 (한 줄씩)</div>
-        <textarea id="j_am_hymns" class="custom-date-input" style="width:100%;background:#F7F4EF;min-height:100px;resize:vertical;font-family:inherit" placeholder="283(134편)&#10;5(2편)&#10;218(111편)&#10;269(126편)&#10;326(살후 3장)"></textarea></div>
-      <div style="display:flex;gap:8px">
-        <div style="flex:1"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">신앙고백</div>
-          <input type="text" id="j_am_creed" class="custom-date-input" style="width:100%;background:#F7F4EF" value="사도신경"/></div>
-        <div style="flex:1"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">성례</div>
-          <input type="text" id="j_am_sacrament" class="custom-date-input" style="width:100%;background:#F7F4EF" value="-"/></div>
+      <div class="form-group">
+        <div class="form-label">예배전 순서</div>
+        <input type="text" id="j_am_pre" class="form-input" placeholder="시편('성전에 올라가는 노래') 해설"/>
       </div>
-      <div style="margin-top:12px;font-size:13px;font-weight:700;margin-bottom:8px">참석인원 (오전)</div>
-      <div style="display:flex;gap:8px">
-        <div style="flex:1;background:#EBF0EA;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:11px;color:#8B8378">남</div>
-          <input type="number" id="j_am_male" style="width:100%;text-align:center;font-size:20px;font-weight:700;color:#4A6741;background:none;border:none;outline:none;font-family:inherit" value="0" oninput="jCalcTotal('am')"/></div>
-        <div style="flex:1;background:#EBF0EA;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:11px;color:#8B8378">여</div>
-          <input type="number" id="j_am_female" style="width:100%;text-align:center;font-size:20px;font-weight:700;color:#4A6741;background:none;border:none;outline:none;font-family:inherit" value="0" oninput="jCalcTotal('am')"/></div>
-        <div style="flex:1;background:#4A6741;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:11px;color:rgba(255,255,255,0.7)">계</div>
-          <input type="number" id="j_am_total" style="width:100%;text-align:center;font-size:20px;font-weight:700;color:#fff;background:none;border:none;outline:none;font-family:inherit" value="0" readonly/></div>
+      <div class="form-group">
+        <div class="form-label">찬송 (한 줄씩)</div>
+        <textarea id="j_am_hymns" class="form-textarea" style="min-height:100px" placeholder="283(134편)&#10;5(2편)&#10;218(111편)&#10;269(126편)&#10;326(살후 3장)"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-label">신앙고백</div>
+          <input type="text" id="j_am_creed" class="form-input" value="사도신경"/>
+        </div>
+        <div class="form-col">
+          <div class="form-label">성례</div>
+          <input type="text" id="j_am_sacrament" class="form-input" value="-"/>
+        </div>
+      </div>
+      <div class="journal-section-title">참석인원 (오전)</div>
+      <div class="att-grid">
+        <div class="att-box">
+          <div class="att-box-label">남</div>
+          <input type="number" id="j_am_male" value="0" oninput="jCalcTotal('am')"/>
+        </div>
+        <div class="att-box">
+          <div class="att-box-label">여</div>
+          <input type="number" id="j_am_female" value="0" oninput="jCalcTotal('am')"/>
+        </div>
+        <div class="att-box att-box-total">
+          <div class="att-box-label">계</div>
+          <input type="number" id="j_am_total" value="0" readonly/>
+        </div>
       </div>
     </div>
 
     <div class="settings-card">
       <div class="settings-label">오후 기도 순서 & 오후 예배</div>
-      <div style="margin-bottom:8px"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">오후 기도 인도자</div>
-        <input type="text" id="j_pm_prayer" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="안 식 집사"/></div>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <div style="flex:1"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">오후 인도자</div>
-          <input type="text" id="j_pm_leader" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="공정윤 강도사"/></div>
-        <div style="flex:1"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">시작</div>
-          <input type="text" id="j_pm_time_start" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="14:50"/></div>
-        <div style="flex:1"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">마침</div>
-          <input type="text" id="j_pm_time_end" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="16:00"/></div>
+      <div class="form-group">
+        <div class="form-label">오후 기도 인도자</div>
+        <input type="text" id="j_pm_prayer" class="form-input" placeholder="안 식 집사"/>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <div style="flex:2"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">제목</div>
-          <input type="text" id="j_pm_title" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="사사기 해설"/></div>
-        <div style="flex:1"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">본문</div>
-          <input type="text" id="j_pm_scripture" class="custom-date-input" style="width:100%;background:#F7F4EF" value="-"/></div>
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-label">오후 인도자</div>
+          <input type="text" id="j_pm_leader" class="form-input" placeholder="공정윤 강도사"/>
+        </div>
+        <div class="form-col">
+          <div class="form-label">시작</div>
+          <input type="text" id="j_pm_time_start" class="form-input" placeholder="14:50"/>
+        </div>
+        <div class="form-col">
+          <div class="form-label">마침</div>
+          <input type="text" id="j_pm_time_end" class="form-input" placeholder="16:00"/>
+        </div>
       </div>
-      <div style="margin-bottom:8px"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">찬송</div>
-        <input type="text" id="j_pm_hymns" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="193(99편), 92(45편)"/></div>
-      <div style="margin-bottom:8px"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">신앙고백</div>
-        <input type="text" id="j_pm_creed" class="custom-date-input" style="width:100%;background:#F7F4EF" value="-"/></div>
-      <div style="margin-top:12px;font-size:13px;font-weight:700;margin-bottom:8px">참석인원 (오후)</div>
-      <div style="display:flex;gap:8px">
-        <div style="flex:1;background:#EBF0EA;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:11px;color:#8B8378">남</div>
-          <input type="number" id="j_pm_male" style="width:100%;text-align:center;font-size:20px;font-weight:700;color:#4A6741;background:none;border:none;outline:none;font-family:inherit" value="0" oninput="jCalcTotal('pm')"/></div>
-        <div style="flex:1;background:#EBF0EA;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:11px;color:#8B8378">여</div>
-          <input type="number" id="j_pm_female" style="width:100%;text-align:center;font-size:20px;font-weight:700;color:#4A6741;background:none;border:none;outline:none;font-family:inherit" value="0" oninput="jCalcTotal('pm')"/></div>
-        <div style="flex:1;background:#4A6741;border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:11px;color:rgba(255,255,255,0.7)">계</div>
-          <input type="number" id="j_pm_total" style="width:100%;text-align:center;font-size:20px;font-weight:700;color:#fff;background:none;border:none;outline:none;font-family:inherit" value="0" readonly/></div>
+      <div class="form-row">
+        <div class="form-col-2">
+          <div class="form-label">제목</div>
+          <input type="text" id="j_pm_title" class="form-input" placeholder="사사기 해설"/>
+        </div>
+        <div class="form-col">
+          <div class="form-label">본문</div>
+          <input type="text" id="j_pm_scripture" class="form-input" value="-"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">찬송</div>
+        <input type="text" id="j_pm_hymns" class="form-input" placeholder="193(99편), 92(45편)"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">신앙고백</div>
+        <input type="text" id="j_pm_creed" class="form-input" value="-"/>
+      </div>
+      <div class="journal-section-title">참석인원 (오후)</div>
+      <div class="att-grid">
+        <div class="att-box">
+          <div class="att-box-label">남</div>
+          <input type="number" id="j_pm_male" value="0" oninput="jCalcTotal('pm')"/>
+        </div>
+        <div class="att-box">
+          <div class="att-box-label">여</div>
+          <input type="number" id="j_pm_female" value="0" oninput="jCalcTotal('pm')"/>
+        </div>
+        <div class="att-box att-box-total">
+          <div class="att-box-label">계</div>
+          <input type="number" id="j_pm_total" value="0" readonly/>
+        </div>
       </div>
     </div>
 
     <div class="settings-card">
       <div class="settings-label">방문 및 결석</div>
-      <div style="margin-bottom:8px"><div style="font-size:11px;color:#8B8378;margin-bottom:4px">방문교인</div>
-        <input type="text" id="j_visitors" class="custom-date-input" style="width:100%;background:#F7F4EF" placeholder="-"/></div>
-      <div><div style="font-size:11px;color:#8B8378;margin-bottom:4px">결석교인 (출석 불러오기로 자동 입력)</div>
-        <textarea id="j_absences" class="custom-date-input" style="width:100%;background:#F7F4EF;min-height:80px;resize:vertical;font-family:inherit" placeholder="- 오전·오후: 이종민(독일)&#10;- 오후: 김병혁, 이선영(대구)"></textarea></div>
+      <div class="form-group">
+        <div class="form-label">방문교인</div>
+        <input type="text" id="j_visitors" class="form-input" placeholder="-"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">결석교인 (출석 불러오기로 자동 입력)</div>
+        <textarea id="j_absences" class="form-textarea" style="min-height:80px" placeholder="- 오전·오후: 이종민(독일)&#10;- 오후: 김병혁, 이선영(대구)"></textarea>
+      </div>
     </div>
 
     <div class="settings-card">
       <div class="settings-label">공지사항</div>
-      <textarea id="j_announcements" class="custom-date-input" style="width:100%;background:#F7F4EF;min-height:160px;resize:vertical;font-family:inherit" placeholder="주보에서 자동 추출됩니다"></textarea>
+      <textarea id="j_announcements" class="form-textarea" style="min-height:140px" placeholder="주보에서 자동 추출됩니다"></textarea>
     </div>
 
     <div class="settings-card">
       <div class="settings-label">학습 보고 (카톡)</div>
       <div class="settings-desc">SDG 교회학교 카톡방 메시지를 붙여넣거나 스크린샷을 올려주세요.</div>
-      <textarea id="j_kakao_text" class="custom-date-input" style="width:100%;background:#F7F4EF;min-height:120px;resize:vertical;font-family:inherit" placeholder="카톡 메시지 붙여넣기...&#10;&#10;예: * 26년 3월 22일 청년부 오전 모임&#10;- 출석 : 3명 (고수민, 박솔민, 허하민)&#10;- 내용 : 창세기 강설#95"></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px">
+      <textarea id="j_kakao_text" class="form-textarea" style="min-height:100px" placeholder="카톡 메시지 붙여넣기...&#10;&#10;예: * 26년 3월 22일 청년부 오전 모임&#10;- 출석 : 3명 (고수민, 박솔민, 허하민)&#10;- 내용 : 창세기 강설#95"></textarea>
+      <div class="action-row" style="margin-top:8px">
         <input type="file" id="kakaoImgInput" accept="image/*" style="display:none" onchange="handleKakaoImg(this)" />
-        <button class="sync-btn" style="background:#C8A45A;flex:1" onclick="document.getElementById('kakaoImgInput').click()">📷 스크린샷 업로드</button>
-        <button class="sync-btn" style="background:#4A6741;flex:1" onclick="parseKakaoReport()">🔍 AI 자동 파싱</button>
+        <button class="btn-accent" onclick="document.getElementById('kakaoImgInput').click()">스크린샷 업로드</button>
+        <button class="btn-primary" onclick="parseKakaoReport()">AI 자동 파싱</button>
       </div>
-      <div id="kakaoImgName" style="font-size:12px;color:#4A6741;margin-top:6px"></div>
-      <div id="kakaoParseStatus" style="font-size:12px;margin-top:6px;color:#4A6741"></div>
+      <div id="kakaoImgName" style="font-size:12px;color:var(--primary);margin-top:6px"></div>
+      <div id="kakaoParseStatus" style="font-size:12px;margin-top:6px;color:var(--primary)"></div>
       <div id="kakaoResult" style="display:none;margin-top:12px">
-        <div style="font-size:13px;font-weight:700;margin-bottom:8px">파싱 결과</div>
+        <div class="journal-section-title">파싱 결과</div>
         <div id="kakaoResultContent"></div>
       </div>
     </div>
 
     <div class="settings-card">
       <div class="settings-label">기타 모임</div>
-      <textarea id="j_other" class="custom-date-input" style="width:100%;background:#F7F4EF;min-height:40px;resize:vertical;font-family:inherit" placeholder="기타 모임 내용"></textarea>
+      <textarea id="j_other" class="form-textarea" style="min-height:40px" placeholder="기타 모임 내용"></textarea>
     </div>
 
-    <div style="display:flex;gap:10px;margin-bottom:10px">
-      <button class="sync-btn" style="background:#2E7D32;flex:1;padding:14px;font-size:15px" onclick="saveJournalToFirebase(true)">📋 일지 생성 요청 (맥북)</button>
+    <div class="action-row">
+      <button class="btn-primary" style="font-size:15px" onclick="saveJournalToFirebase(true)">일지 생성 요청 (맥북)</button>
     </div>
-    <div style="display:flex;gap:10px;margin-bottom:10px">
-      <button class="sync-btn" style="background:#888;flex:1;font-size:12px" onclick="saveJournalToFirebase(false)">💾 임시 저장</button>
+    <div class="action-row">
+      <button class="btn-secondary" onclick="saveJournalToFirebase(false)">임시 저장</button>
     </div>
-    <div style="display:flex;gap:10px;margin-bottom:80px">
-      <button class="sync-btn" style="background:#C0392B;flex:1" onclick="generateJournal('pdf')">📕 PDF 저장</button>
-      <button class="sync-btn" style="background:#1155CC;flex:1" onclick="generateJournal('doc')">📝 Word 저장</button>
+    <div class="action-row" style="margin-bottom:12px">
+      <button class="btn-danger" onclick="generateJournal('pdf')">PDF 저장</button>
+      <button class="sync-btn" style="flex:1;margin-top:0;background:#1155CC" onclick="generateJournal('doc')">Word 저장</button>
     </div>
 
   </div>
 </div>
 
+<!-- Bottom Navigation -->
+<div class="nav">
+  <button class="nav-btn active" onclick="switchView('attendance')">
+    <div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+    출석
+  </button>
+  <button class="nav-btn" onclick="switchView('journal')">
+    <div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+    일지
+  </button>
+  <button class="nav-btn" onclick="switchView('members')">
+    <div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+    명단
+  </button>
+  <button class="nav-btn" onclick="switchView('stats')">
+    <div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+    통계
+  </button>
+  <button class="nav-btn" onclick="switchView('settings')">
+    <div class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+    설정
+  </button>
+</div>
+
 <!-- Absence Modal -->
 <div class="modal-overlay" id="absenceModal">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-title" id="absenceModalName"></div>
     <div class="modal-sub">결석 사유를 선택하거나 직접 입력해주세요</div>
     <div class="reason-chips" id="reasonChips"></div>
     <input class="custom-input" id="customReasonInput" placeholder="직접 입력..." style="display:none" />
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeAbsenceModal()">취소</button>
-      <button class="modal-cancel" style="background:#e8f5e9;color:#2e7d32" onclick="cancelAttendance()">출석 취소</button>
+      <button class="modal-cancel" style="background:var(--primary-50);color:var(--primary)" onclick="cancelAttendance()">출석 취소</button>
       <button class="modal-confirm" onclick="confirmAbsence()">결석 처리</button>
     </div>
   </div>
@@ -459,6 +1115,7 @@
 <!-- Add Member Modal -->
 <div class="modal-overlay" id="addMemberModal">
   <div class="modal">
+    <div class="modal-handle"></div>
     <div class="modal-title">새 교인 추가</div>
     <div class="modal-sub" style="margin-bottom:16px">이름과 성별을 입력해주세요</div>
     <input class="modal-input" id="newMemberName" placeholder="이름" />
@@ -527,8 +1184,7 @@ let journalPdfBase64 = null;
 function getNextSundays(count) {
   const sundays = [];
   const today = new Date();
-  const day = today.getDay(); // 0=일, 6=토
-  // 가장 최근 지난 일요일 또는 오늘(일요일)
+  const day = today.getDay();
   const diff = day === 0 ? 0 : -day;
   const base = new Date(today);
   base.setDate(today.getDate() + diff);
@@ -536,7 +1192,6 @@ function getNextSundays(count) {
   for (let i = 0; i < count; i++) {
     const d = new Date(base);
     d.setDate(base.getDate() - i * 7);
-    // 로컬 날짜 기준으로 YYYY-MM-DD 생성
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth()+1).padStart(2,'0');
     const dd = String(d.getDate()).padStart(2,'0');
@@ -555,29 +1210,26 @@ function formatDate(str) {
 }
 
 function init() {
-  // Load from localStorage
   const savedMembers = localStorage.getItem("churchMembers");
   const savedAttendance = localStorage.getItem("churchAttendance");
   const savedUrl = localStorage.getItem("sdgScriptUrl");
 
   let parsedMembers = null;
   try { parsedMembers = savedMembers ? JSON.parse(savedMembers) : null; } catch(e) {}
-  members = (parsedMembers && Array.isArray(parsedMembers) && parsedMembers.length >= 10) 
+  members = (parsedMembers && Array.isArray(parsedMembers) && parsedMembers.length >= 10)
     ? parsedMembers : [...MEMBERS_DEFAULT];
-  // 항상 DEFAULT로 저장 (빈 배열 덮어쓰기)
   localStorage.setItem('churchMembers', JSON.stringify(members));
   attendance = savedAttendance ? JSON.parse(savedAttendance) : {};
   scriptUrl = savedUrl || "https://script.google.com/macros/s/AKfycbw_CUDSE9aVA-4hcG7gzFYLRXNKeIYF96gxdxA8lFXR_taN9R6qPFry30RqvdwU3uyB/exec";
 
   document.getElementById("scriptUrlInput").value = scriptUrl;
   if (scriptUrl) {
-    document.getElementById("connectionStatus").innerHTML = `<div class="connected-badge">✓ 구글 시트 연결됨</div>`;
+    document.getElementById("connectionStatus").innerHTML = `<div class="connected-badge">구글 시트 연결됨</div>`;
   }
 
   const GEMINI_API_KEY = localStorage.getItem("geminiApiKey") || "";
   if (GEMINI_API_KEY) document.getElementById("apiKeyInput").value = GEMINI_API_KEY;
 
-  // Set default date to most recent sunday
   const sundays = getNextSundays(12);
   selectedDate = sundays[0];
 
@@ -587,8 +1239,6 @@ function init() {
   renderManageList();
   updateStats();
   document.getElementById("memberCount").textContent = members.length;
-
-
 }
 
 // ===================== SAVE =====================
@@ -601,7 +1251,7 @@ function saveLocal() {
 function showSaveBadge(msg) {
   const badge = document.getElementById("saveBadge");
   if (msg) badge.textContent = msg;
-  else badge.textContent = "✓ 저장됨";
+  else badge.textContent = "저장됨";
   badge.classList.add("show");
   setTimeout(() => badge.classList.remove("show"), 1500);
 }
@@ -686,7 +1336,6 @@ function renderMemberList() {
     const avatar = isPresent ? catHappy : isAbsent ? catSad : catDefault;
     const reason = isAbsent && status?.reason ? `<div class="member-reason">${status.reason}</div>` : "";
 
-    // 반대 세션 출석 상태 표시
     const otherSession = currentSession === "오전" ? "오후" : "오전";
     const otherKey = `${selectedDate}_${otherSession}`;
     const otherData = attendance[otherKey];
@@ -733,7 +1382,6 @@ function updateSummary() {
 function toggleMember(memberId) {
   const status = getStatus(memberId);
   if (status?.present === true) {
-    // Open absence modal
     absenceMemberId = memberId;
     selectedReason = "";
     const m = members.find(m => m.id === memberId);
@@ -743,7 +1391,6 @@ function toggleMember(memberId) {
     document.getElementById("customReasonInput").value = "";
     document.getElementById("absenceModal").classList.add("show");
   } else {
-    // Mark present
     if (!attendance[getSessionKey()]) attendance[getSessionKey()] = {};
     attendance[getSessionKey()][memberId] = { present: true, reason: "" };
     saveLocal();
@@ -769,7 +1416,6 @@ function clearSession() {
     const key = getSessionKey();
     delete attendance[key];
     saveLocal();
-    // Firebase에서도 삭제
     const FB_URL = "https://sdgc-ae7f9-default-rtdb.asia-southeast1.firebasedatabase.app";
     fetch(`${FB_URL}/attendance/${key}.json`, { method: 'DELETE' }).catch(()=>{});
     renderMemberList();
@@ -781,7 +1427,6 @@ function resetSession() {
   const key = getSessionKey();
   attendance[key] = {};
   saveLocal();
-  // Firebase에서도 삭제
   const FB_URL = "https://sdgc-ae7f9-default-rtdb.asia-southeast1.firebasedatabase.app";
   fetch(`${FB_URL}/attendance/${key}.json`, { method: 'DELETE' }).catch(()=>{});
   renderMemberList();
@@ -825,7 +1470,6 @@ function cancelAttendance() {
     delete attendance[key][String(absenceMemberId)];
   }
   saveLocal();
-  // Firebase에서도 삭제
   const FB_URL = "https://sdgc-ae7f9-default-rtdb.asia-southeast1.firebasedatabase.app";
   fetch(`${FB_URL}/attendance/${key}/${absenceMemberId}.json`, { method: 'DELETE' }).catch(()=>{});
   closeAbsenceModal();
@@ -881,7 +1525,7 @@ function renderManageList() {
   document.getElementById("manageList").innerHTML = members.map(m => `
     <div class="manage-item">
       <span class="gender-tag ${m.gender === '남' ? 'gender-m' : 'gender-f'}">${m.gender}</span>
-      <span style="flex:1;font-size:15px;font-weight:500;color:#2D2A25">${m.name}</span>
+      <span class="manage-item-name">${m.name}</span>
       <button class="remove-btn" onclick="removeMember(${m.id})">×</button>
     </div>`).join("");
   document.getElementById("memberCount").textContent = members.length;
@@ -900,14 +1544,12 @@ function updateStats() {
   const statMap = {};
   members.forEach(m => { statMap[m.id] = { name: m.name, gender: m.gender, total: 0, present: 0, reasons: [] }; });
 
-  // 출석 기록이 있는 세션 목록 (최소 1명이라도 기록된 세션)
   const sessionKeys = Object.keys(attendance).filter(key => {
     const data = attendance[key];
     return data && typeof data === 'object' && Object.keys(data).length > 0;
   });
   const totalSessions = sessionKeys.length;
 
-  // 각 세션별로 모든 멤버의 출석 확인
   sessionKeys.forEach(key => {
     const data = attendance[key];
     members.forEach(m => {
@@ -920,7 +1562,6 @@ function updateStats() {
     });
   });
 
-  // 모든 멤버의 total = 전체 세션 수
   members.forEach(m => { statMap[m.id].total = totalSessions; });
 
   const sorted = Object.values(statMap).filter(s => s.total > 0).sort((a, b) => (b.present/b.total) - (a.present/a.total));
@@ -932,7 +1573,7 @@ function updateStats() {
 
   document.getElementById("statsList").innerHTML = sorted.map(s => {
     const rate = Math.round((s.present / s.total) * 100);
-    const color = rate >= 80 ? "#4A6741" : rate >= 50 ? "#C8A45A" : "#E85C5C";
+    const color = rate >= 80 ? "var(--primary)" : rate >= 50 ? "var(--accent)" : "var(--danger)";
     return `
       <div class="stat-item">
         <div class="stat-header">
@@ -953,14 +1594,13 @@ function saveScriptUrl() {
   scriptUrl = url;
   localStorage.setItem("sdgScriptUrl", url);
 
-  // Test connection
   fetch(`${url}?action=getMembers`)
     .then(r => r.json())
     .then(data => {
-      document.getElementById("connectionStatus").innerHTML = `<div class="connected-badge">✓ 연결 성공!</div>`;
+      document.getElementById("connectionStatus").innerHTML = `<div class="connected-badge">연결 성공!</div>`;
     })
     .catch(() => {
-      document.getElementById("connectionStatus").innerHTML = `<div style="color:#E85C5C;font-size:13px;margin-top:8px">⚠️ 연결 실패. URL을 다시 확인해주세요.</div>`;
+      document.getElementById("connectionStatus").innerHTML = `<div style="color:var(--danger);font-size:13px;margin-top:8px">연결 실패. URL을 다시 확인해주세요.</div>`;
     });
 }
 
@@ -968,17 +1608,17 @@ function showSyncStatus(status) {
   const badge = document.getElementById("syncBadge");
   if (status === "syncing") {
     badge.style.display = "inline-flex";
-    badge.textContent = "🔄 저장 중";
-    badge.style.background = "#5B8FA8";
+    badge.textContent = "저장 중";
+    badge.style.background = "var(--primary-500)";
   } else if (status === "ok") {
     badge.style.display = "inline-flex";
-    badge.textContent = "☁️ 시트 저장됨";
-    badge.style.background = "#4A6741";
+    badge.textContent = "시트 저장됨";
+    badge.style.background = "var(--primary)";
     setTimeout(() => { badge.style.display = "none"; }, 2000);
   } else if (status === "fail") {
     badge.style.display = "inline-flex";
-    badge.textContent = "⚠️ 시트 저장 실패";
-    badge.style.background = "#E85C5C";
+    badge.textContent = "저장 실패";
+    badge.style.background = "var(--danger)";
     setTimeout(() => { badge.style.display = "none"; }, 3000);
   }
 }
@@ -987,12 +1627,8 @@ async function syncOne(memberId, present, reason) {
   if (window._syncOne) window._syncOne(memberId, present, reason);
 }
 
-function syncMembers() {
-  // 명단은 Firebase 동기화 안함 - 로컬만 사용
-}
+function syncMembers() {}
 
-
-// JSONP 헬퍼
 function jsonp(url) {
   return new Promise((resolve, reject) => {
     const cbName = 'cb_' + Math.random().toString(36).slice(2);
@@ -1010,12 +1646,10 @@ async function syncToSheets() {
   const badge = document.getElementById("syncBadge");
   badge.style.display = "inline-flex";
   try {
-    // 명단 저장
     await jsonp(`${scriptUrl}?action=saveMembers&data=${encodeURIComponent(JSON.stringify(members))}`);
-    // 출석 전체 저장
     await jsonp(`${scriptUrl}?action=saveAllAttendance&data=${encodeURIComponent(JSON.stringify({ attendance }))}`);
     badge.style.display = "none";
-    showSaveBadge("☁️ 클라우드 저장 완료");
+    showSaveBadge("클라우드 저장 완료");
   } catch(e) {
     badge.style.display = "none";
     alert("동기화 실패: " + e.message);
@@ -1038,7 +1672,7 @@ async function syncFromSheets() {
       localStorage.setItem('churchAttendance', JSON.stringify(attendance));
     }
     badge.style.display = "none";
-    showSaveBadge("☁️ 불러오기 완료");
+    showSaveBadge("불러오기 완료");
     renderManageList();
     renderMemberList();
   } catch(e) {
@@ -1087,7 +1721,7 @@ let kakaoStudyData = null;
 function handleKakaoImg(input) {
   const file = input.files[0];
   if (!file) return;
-  document.getElementById('kakaoImgName').textContent = '📷 ' + file.name;
+  document.getElementById('kakaoImgName').textContent = file.name;
   const reader = new FileReader();
   reader.onload = function(e) {
     kakaoImgBase64 = e.target.result.split(',')[1];
@@ -1140,9 +1774,9 @@ async function parseKakaoReport() {
   const text = document.getElementById('j_kakao_text').value.trim();
   const statusEl = document.getElementById('kakaoParseStatus');
   const apiKey = localStorage.getItem('geminiApiKey');
-  if (!apiKey) { statusEl.textContent = '⚠️ 설정탭에서 Gemini API 키를 먼저 입력해주세요.'; return; }
-  if (!text && !kakaoImgBase64) { statusEl.textContent = '⚠️ 카톡 메시지를 붙여넣거나 스크린샷을 올려주세요.'; return; }
-  statusEl.textContent = '🔄 Gemini가 학습 보고를 분석 중...';
+  if (!apiKey) { statusEl.textContent = '설정탭에서 Gemini API 키를 먼저 입력해주세요.'; return; }
+  if (!text && !kakaoImgBase64) { statusEl.textContent = '카톡 메시지를 붙여넣거나 스크린샷을 올려주세요.'; return; }
+  statusEl.textContent = 'Gemini가 학습 보고를 분석 중...';
   const parts = [];
   if (kakaoImgBase64) {
     parts.push({ inline_data: { mime_type: "image/png", data: kakaoImgBase64 } });
@@ -1167,8 +1801,8 @@ async function parseKakaoReport() {
     const parsed = JSON.parse(resultText.replace(/```json|```/g,'').trim());
     kakaoStudyData = parsed;
     displayKakaoResult(parsed);
-    statusEl.textContent = '✓ 파싱 완료!';
-  } catch(e) { statusEl.textContent = '⚠️ 오류: '+e.message; }
+    statusEl.textContent = '파싱 완료!';
+  } catch(e) { statusEl.textContent = '오류: '+e.message; }
 }
 
 function displayKakaoResult(data) {
@@ -1176,16 +1810,16 @@ function displayKakaoResult(data) {
   const wrapper = document.getElementById('kakaoResult');
   wrapper.style.display = 'block';
   if (!data.classes || !data.classes.length) {
-    container.innerHTML = '<div style="color:#C0392B">파싱된 데이터가 없습니다.</div>';
+    container.innerHTML = '<div style="color:var(--danger)">파싱된 데이터가 없습니다.</div>';
     return;
   }
   let html = '';
   data.classes.forEach(cls => {
-    html += `<div style="background:#F7F4EF;border-radius:10px;padding:12px;margin-bottom:8px">
-      <div style="font-weight:700;color:#4A6741;margin-bottom:6px">${cls.department||'부서'}</div>
-      <div style="font-size:12px;color:#555">
+    html += `<div class="kakao-card">
+      <div class="kakao-dept">${cls.department||'부서'}</div>
+      <div class="kakao-detail">
         <div>출석: ${cls.attendance_count}명 — ${(cls.attendees||[]).join(', ')}</div>
-        ${cls.absent_count>0?`<div style="color:#C0392B">결석: ${cls.absent_count}명 — ${(cls.absentees||[]).join(', ')}</div>`:''}
+        ${cls.absent_count>0?`<div class="kakao-absent">결석: ${cls.absent_count}명 — ${(cls.absentees||[]).join(', ')}</div>`:''}
         <div>내용: ${cls.content||'-'}</div>
         ${cls.note&&cls.note!=='없음'?`<div>비고: ${cls.note}</div>`:''}
       </div>
@@ -1205,7 +1839,6 @@ function saveJournalToFirebase(triggerGenerate) {
     generated: false,
     updated_at: new Date().toISOString()
   };
-  // 카카오 파싱 결과가 있을 때만 study_classes 전송 (기존 데이터 보존)
   if (kakaoStudyData && kakaoStudyData.classes && kakaoStudyData.classes.length > 0) {
     journalData.study_classes = kakaoStudyData.classes;
   }
@@ -1215,7 +1848,7 @@ function saveJournalToFirebase(triggerGenerate) {
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify(journalData)
   }).then(r => {
-    if (r.ok) showSaveBadge(triggerGenerate ? '📋 일지 생성 요청됨!' : '💾 일지 저장됨');
+    if (r.ok) showSaveBadge(triggerGenerate ? '일지 생성 요청됨!' : '일지 저장됨');
   }).catch(e => alert('저장 오류: '+e.message));
 }
 
@@ -1388,7 +2021,7 @@ function saveApiKey() {
   const key = document.getElementById('apiKeyInput').value.trim();
   if (!key) return;
   localStorage.setItem('geminiApiKey', key);
-  document.getElementById('apiKeyStatus').textContent = '✓ Gemini API 키가 저장되었습니다.';
+  document.getElementById('apiKeyStatus').textContent = 'Gemini API 키가 저장되었습니다.';
 }
 
 function jCalcTotal(session) {
@@ -1418,7 +2051,6 @@ function downloadExcel() {
   const fromVal = document.getElementById('excelFrom').value;
   const toVal = document.getElementById('excelTo').value;
   const sessions = ['오전', '오후'];
-  // 출석 데이터에서 날짜 목록 추출 및 필터링
   const allKeys = Object.keys(attendance).sort();
   const dates = [...new Set(allKeys.map(k => k.split('_')[0]))].filter(d => {
     if (fromVal && d < fromVal) return false;
@@ -1426,7 +2058,6 @@ function downloadExcel() {
     return true;
   }).sort();
   if (dates.length === 0) { alert('해당 기간에 출석 데이터가 없습니다.'); return; }
-  // CSV 헤더: 이름, 성별, 날짜_세션...
   const cols = [];
   dates.forEach(d => sessions.forEach(s => cols.push(d + '_' + s)));
   let csv = '\uFEFF이름,성별,' + cols.map(c => c.replace('_', ' ')).join(',') + ',출석합계\n';
@@ -1453,8 +2084,8 @@ async function extractJournalFromPdf() {
   if (!journalPdfBase64) return;
   const statusEl = document.getElementById('journalExtractStatus');
   const apiKey = localStorage.getItem('geminiApiKey');
-  if (!apiKey) { statusEl.textContent = '⚠️ 설정탭에서 Gemini API 키를 먼저 입력해주세요.'; return; }
-  statusEl.textContent = '🔄 Gemini가 주보를 분석 중...';
+  if (!apiKey) { statusEl.textContent = '설정탭에서 Gemini API 키를 먼저 입력해주세요.'; return; }
+  statusEl.textContent = 'Gemini가 주보를 분석 중...';
   const prompt = `이 문서는 솔리데오글로리아교회 주일 예배 주보입니다. 아래 JSON 형식으로만 응답하세요. 마크다운 없이 순수 JSON만.
 
 주보 분석 요령:
@@ -1501,7 +2132,6 @@ async function extractJournalFromPdf() {
     try {
       parsed = JSON.parse(text);
     } catch(e) {
-      // JSON 파싱 실패 시 줄바꿈/특수문자 정리 후 재시도
       text = text.replace(/[\x00-\x1f]/g, (c) => c === '\n' ? '\\n' : c === '\t' ? '\\t' : '');
       parsed = JSON.parse(text);
     }
@@ -1516,15 +2146,14 @@ async function extractJournalFromPdf() {
     if(parsed.pm_time_end&&document.getElementById('j_pm_time_end')) document.getElementById('j_pm_time_end').value=parsed.pm_time_end;
     set('j_pm_title',parsed.pm_title); set('j_pm_scripture',parsed.pm_scripture);
     set('j_pm_hymns',parsed.pm_hymns); set('j_pm_creed',parsed.pm_creed); set('j_announcements',parsed.announcements);
-    // 인원수 세팅
     if(parsed.am_male) document.getElementById('j_am_male').value = parsed.am_male;
     if(parsed.am_female) document.getElementById('j_am_female').value = parsed.am_female;
     if(parsed.am_total) document.getElementById('j_am_total').value = parsed.am_total;
     if(parsed.pm_male) document.getElementById('j_pm_male').value = parsed.pm_male;
     if(parsed.pm_female) document.getElementById('j_pm_female').value = parsed.pm_female;
     if(parsed.pm_total) document.getElementById('j_pm_total').value = parsed.pm_total;
-    statusEl.textContent = '✓ 추출 완료! 내용을 확인하고 생성 요청하세요.';
-  } catch(e) { statusEl.textContent = '⚠️ 오류: '+e.message; }
+    statusEl.textContent = '추출 완료! 내용을 확인하고 생성 요청하세요.';
+  } catch(e) { statusEl.textContent = '오류: '+e.message; }
 }
 
 function loadAttendanceToJournal() {
@@ -1558,21 +2187,21 @@ function loadAttendanceToJournal() {
   if (absences.am.length) absText += '- 오전: '+absences.am.join(', ')+'\n';
   if (absences.pm.length) absText += '- 오후: '+absences.pm.join(', ')+'\n';
   document.getElementById('j_absences').value = absText.trim() || '-';
-  document.getElementById('journalAttLoaded').textContent = '✓ 출석 데이터 로드 완료';
+  document.getElementById('journalAttLoaded').textContent = '출석 데이터 로드 완료';
 }
 
 
 // Firebase 동기화
 (function() {
   const FB_URL = "https://sdgc-ae7f9-default-rtdb.asia-southeast1.firebasedatabase.app";
-  
+
   function fbGet(path, cb) {
     fetch(`${FB_URL}/${path}.json`)
       .then(r => r.json())
       .then(cb)
       .catch(e => console.log('FB get error:', e));
   }
-  
+
   function fbSet(path, data) {
     fetch(`${FB_URL}/${path}.json`, {
       method: 'PUT',
@@ -1581,7 +2210,6 @@ function loadAttendanceToJournal() {
     }).catch(e => console.log('FB set error:', e));
   }
 
-  // 출석 저장 (syncOne 덮어쓰기)
   window._syncOne = function(memberId, present, reason) {
     const key = String(memberId);
     const sessionKey = getSessionKey();
@@ -1589,7 +2217,6 @@ function loadAttendanceToJournal() {
     showSyncStatus("ok");
   };
 
-  // Firebase가 순차 숫자키를 배열로 변환하는 문제 보정
   function normalizeFirebaseData(data) {
     if (!data || typeof data !== 'object') return data;
     var result = {};
@@ -1606,7 +2233,6 @@ function loadAttendanceToJournal() {
     return result;
   }
 
-  // Firebase에서 출석 데이터 불러오기 (3초마다 폴링)
   function pollAttendance() {
     fbGet('attendance', function(data) {
       if (data && typeof data === 'object' && Object.keys(data).length > 0) {
@@ -1622,10 +2248,9 @@ function loadAttendanceToJournal() {
     });
   }
 
-  // 초기 로드 후 Firebase 데이터 가져오기
   setTimeout(function() {
     pollAttendance();
-    setInterval(pollAttendance, 5000); // 5초마다 동기화
+    setInterval(pollAttendance, 5000);
   }, 1000);
 })();
 
