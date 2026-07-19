@@ -322,6 +322,65 @@
   .gender-f { background: #FDF2F8; color: #A0527A; }
   .cat-svg { width: 26px; height: 26px; }
 
+  /* ===== Memo (교인별 / 날짜별) ===== */
+  .member-memo {
+    font-size: 11px;
+    color: var(--text-2);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .memo-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 6px;
+    color: var(--text-3);
+    flex-shrink: 0;
+    line-height: 1;
+    transition: opacity 0.15s;
+  }
+  .memo-btn:active { opacity: 0.5; }
+  .memo-btn.has-memo { color: var(--primary); }
+  .manage-memo-btn {
+    background: var(--primary-50);
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+  .manage-memo-btn:active { opacity: 0.7; }
+
+  .date-memo-bar { background: var(--card); padding: 0 20px 12px; border-bottom: 1px solid var(--border); }
+  .date-memo-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--primary-50);
+    border: 1px solid var(--primary-100);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+  }
+  .date-memo-toggle:active { opacity: 0.85; }
+  .date-memo-dot { color: var(--accent); font-size: 14px; }
+  .date-memo-body { margin-top: 8px; }
+  .date-memo-body .form-textarea { min-height: 70px; }
+  .date-memo-status { font-size: 11px; color: var(--primary); margin-top: 4px; min-height: 14px; }
+
   /* ===== Stats ===== */
   .stats-container { padding: 16px; }
   .section-title { font-weight: 800; font-size: 18px; color: var(--text); margin-bottom: 16px; }
@@ -788,6 +847,16 @@
       <button class="all-btn all-btn-danger" onclick="clearSession()">초기화</button>
     </div>
   </div>
+  <div class="date-memo-bar">
+    <button class="date-memo-toggle" onclick="toggleDateMemo()">
+      <span>📝 오늘의 메모 <span class="date-memo-dot" id="dateMemoDot"></span></span>
+      <span id="dateMemoChevron">▾</span>
+    </button>
+    <div class="date-memo-body" id="dateMemoBody" style="display:none">
+      <textarea class="form-textarea" id="dateMemoText" placeholder="이 날짜·세션의 자유 메모 (자동 저장)" oninput="onDateMemoInput()"></textarea>
+      <div class="date-memo-status" id="dateMemoStatus"></div>
+    </div>
+  </div>
   <div class="filter-bar">
     <input class="search-input" placeholder="이름 검색..." oninput="filterMembers(this.value)" id="searchInput" />
     <button class="filter-btn active" onclick="setGenderFilter('전체', this)">전체</button>
@@ -901,6 +970,11 @@
       </div>
       <button class="btn-primary" style="width:100%;padding:12px" onclick="loadAttendanceToJournal()">출석 데이터 불러오기</button>
       <div id="journalAttLoaded" style="font-size:12px;color:var(--primary);margin-top:6px"></div>
+      <div class="action-row" style="margin-top:10px">
+        <button class="btn-secondary" onclick="loadJournalFromFirebase()">저장 일지 불러오기</button>
+        <button class="btn-danger" onclick="deleteJournalFromFirebase()">저장 일지 삭제</button>
+      </div>
+      <div id="journalCrudStatus" style="font-size:12px;color:var(--primary);margin-top:6px"></div>
     </div>
 
     <div class="settings-card">
@@ -1130,6 +1204,20 @@
   </div>
 </div>
 
+<!-- Member Memo Modal -->
+<div class="modal-overlay" id="memoModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="memoModalName"></div>
+    <div class="modal-sub">이 교인에 대한 메모예요. 매주 그대로 유지됩니다.</div>
+    <textarea class="form-textarea" id="memoTextarea" style="min-height:100px;margin-bottom:16px" placeholder="예: 010-1234-5678 / 최근 이사 / 심방 요청 등"></textarea>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeMemoModal()">취소</button>
+      <button class="modal-confirm modal-confirm-green" onclick="saveMemberMemo()">저장</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/docx@9.5.3/build/index.js"></script>
 <script>
 // ===================== DATA =====================
@@ -1179,6 +1267,20 @@ let selectedReason = "";
 let newMemberGender = "남";
 let scriptUrl = "";
 let journalPdfBase64 = null;
+let memoMemberId = null;
+let dateMemos = {};
+let dateMemoTimer = null;
+let dateMemoPendingKey = null;
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function ensureMemoFields() {
+  members.forEach(m => { if (typeof m.memo !== 'string') m.memo = ''; });
+}
 
 // ===================== INIT =====================
 function getNextSundays(count) {
@@ -1218,8 +1320,12 @@ function init() {
   try { parsedMembers = savedMembers ? JSON.parse(savedMembers) : null; } catch(e) {}
   members = (parsedMembers && Array.isArray(parsedMembers) && parsedMembers.length >= 10)
     ? parsedMembers : [...MEMBERS_DEFAULT];
+  ensureMemoFields();
   localStorage.setItem('churchMembers', JSON.stringify(members));
   attendance = savedAttendance ? JSON.parse(savedAttendance) : {};
+
+  const savedDateMemos = localStorage.getItem("churchDateMemos");
+  try { dateMemos = savedDateMemos ? JSON.parse(savedDateMemos) : {}; } catch(e) { dateMemos = {}; }
   scriptUrl = savedUrl || "https://script.google.com/macros/s/AKfycbw_CUDSE9aVA-4hcG7gzFYLRXNKeIYF96gxdxA8lFXR_taN9R6qPFry30RqvdwU3uyB/exec";
 
   document.getElementById("scriptUrlInput").value = scriptUrl;
@@ -1237,8 +1343,11 @@ function init() {
   renderDateLabel();
   renderMemberList();
   renderManageList();
+  loadDateMemoUI();
   updateStats();
   document.getElementById("memberCount").textContent = members.length;
+  const journalDateInput = document.getElementById("j_date");
+  if (journalDateInput && !journalDateInput.value) journalDateInput.value = selectedDate;
 }
 
 // ===================== SAVE =====================
@@ -1290,6 +1399,7 @@ function selectDate(d) {
   renderDateChips();
   document.getElementById("datePicker").style.display = "none";
   renderMemberList();
+  loadDateMemoUI();
   updateSummary();
 }
 
@@ -1303,6 +1413,7 @@ function setSession(s) {
   document.getElementById("btn-오전").classList.toggle("active", s === "오전");
   document.getElementById("btn-오후").classList.toggle("active", s === "오후");
   renderMemberList();
+  loadDateMemoUI();
   updateSummary();
 }
 
@@ -1347,6 +1458,8 @@ function renderMemberList() {
       otherHtml = `<div class="other-session"><span class="os-absent">${otherSession} ✕</span></div>`;
     }
 
+    const memoHtml = m.memo ? `<div class="member-memo">📝 ${escapeHtml(m.memo)}</div>` : "";
+
     return `
       <div class="member-item ${cls}" onclick="toggleMember(${m.id})">
         <div class="member-avatar">${avatar}</div>
@@ -1354,7 +1467,9 @@ function renderMemberList() {
           <div class="member-name">${m.name}</div>
           ${reason}
           ${otherHtml}
+          ${memoHtml}
         </div>
+        <button class="memo-btn ${m.memo ? 'has-memo' : ''}" onclick="openMemberMemo(${m.id}, event)" title="메모">${m.memo ? '📝' : '🖊'}</button>
         <span class="gender-tag ${m.gender === '남' ? 'gender-m' : 'gender-f'}">${m.gender}</span>
       </div>`;
   }).join("");
@@ -1525,7 +1640,11 @@ function renderManageList() {
   document.getElementById("manageList").innerHTML = members.map(m => `
     <div class="manage-item">
       <span class="gender-tag ${m.gender === '남' ? 'gender-m' : 'gender-f'}">${m.gender}</span>
-      <span class="manage-item-name">${m.name}</span>
+      <div style="flex:1;min-width:0">
+        <div class="manage-item-name">${m.name}</div>
+        ${m.memo ? `<div class="member-memo">📝 ${escapeHtml(m.memo)}</div>` : ''}
+      </div>
+      <button class="manage-memo-btn" onclick="openMemberMemo(${m.id}, event)">메모</button>
       <button class="remove-btn" onclick="removeMember(${m.id})">×</button>
     </div>`).join("");
   document.getElementById("memberCount").textContent = members.length;
@@ -1537,6 +1656,87 @@ function removeMember(id) {
   renderManageList();
   renderMemberList();
   if (scriptUrl) syncMembers();
+}
+
+// ===================== MEMBER MEMO =====================
+function openMemberMemo(id, e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const m = members.find(m => String(m.id) === String(id));
+  if (!m) return;
+  memoMemberId = m.id;
+  document.getElementById("memoModalName").textContent = m.name + " 메모";
+  document.getElementById("memoTextarea").value = m.memo || "";
+  document.getElementById("memoModal").classList.add("show");
+  setTimeout(() => document.getElementById("memoTextarea").focus(), 300);
+}
+
+function closeMemoModal() {
+  document.getElementById("memoModal").classList.remove("show");
+  memoMemberId = null;
+}
+
+function saveMemberMemo() {
+  if (memoMemberId == null) return;
+  const m = members.find(mm => String(mm.id) === String(memoMemberId));
+  if (!m) { closeMemoModal(); return; }
+  const text = document.getElementById("memoTextarea").value.trim();
+  m.memo = text;
+  saveLocal();
+  if (window._syncMemberMemo) window._syncMemberMemo(m.id, text);
+  closeMemoModal();
+  renderMemberList();
+  renderManageList();
+}
+
+// ===================== DATE MEMO =====================
+function dateMemoKey() {
+  return `${selectedDate}_${currentSession}`;
+}
+
+function loadDateMemoUI() {
+  const t = document.getElementById("dateMemoText");
+  if (!t) return;
+  if (document.activeElement !== t) t.value = dateMemos[dateMemoKey()] || "";
+  updateDateMemoDot();
+}
+
+function updateDateMemoDot() {
+  const dot = document.getElementById("dateMemoDot");
+  if (!dot) return;
+  const v = dateMemos[dateMemoKey()];
+  dot.textContent = (v && v.trim()) ? "●" : "";
+}
+
+function toggleDateMemo() {
+  const body = document.getElementById("dateMemoBody");
+  const chev = document.getElementById("dateMemoChevron");
+  const opening = body.style.display === "none";
+  body.style.display = opening ? "block" : "none";
+  chev.textContent = opening ? "▴" : "▾";
+}
+
+function onDateMemoInput() {
+  const text = document.getElementById("dateMemoText").value;
+  const date = selectedDate, session = currentSession;
+  const key = `${date}_${session}`;
+  dateMemoPendingKey = key; // guard poll from clobbering this unsynced edit
+  dateMemos[key] = text;
+  localStorage.setItem("churchDateMemos", JSON.stringify(dateMemos));
+  updateDateMemoDot();
+  const statusEl = document.getElementById("dateMemoStatus");
+  if (statusEl) statusEl.textContent = "저장 중...";
+  clearTimeout(dateMemoTimer);
+  dateMemoTimer = setTimeout(() => {
+    const p = window._syncDateMemo ? window._syncDateMemo(date, session, text) : null;
+    Promise.resolve(p).catch(()=>{}).then(() => {
+      // only release the guard if no newer keystroke re-armed it for this key
+      if (dateMemoPendingKey === key) dateMemoPendingKey = null;
+    });
+    if (statusEl) {
+      statusEl.textContent = "저장됨";
+      setTimeout(() => { if (statusEl.textContent === "저장됨") statusEl.textContent = ""; }, 1500);
+    }
+  }, 800);
 }
 
 // ===================== STATS =====================
@@ -1664,7 +1864,10 @@ async function syncFromSheets() {
     const data = await jsonp(`${scriptUrl}?action=getAll`);
     if (data.error) throw new Error(data.error);
     if (data.members && data.members.length > 0) {
+      const oldMemos = {};
+      members.forEach(m => { if (m.memo) oldMemos[m.id] = m.memo; });
       members = data.members;
+      members.forEach(m => { if (typeof m.memo !== 'string') m.memo = oldMemos[m.id] || ''; });
       localStorage.setItem('churchMembers', JSON.stringify(members));
     }
     if (data.attendance && Object.keys(data.attendance).length > 0) {
@@ -1829,7 +2032,67 @@ function displayKakaoResult(data) {
 }
 
 // === Firebase 일지 저장 ===
-function saveJournalToFirebase(triggerGenerate) {
+const JOURNAL_FB_URL = "https://sdgc-ae7f9-default-rtdb.asia-southeast1.firebasedatabase.app";
+
+function splitJournalTimeRange(value) {
+  if (!value || value === '-') return ['', ''];
+  const parts = String(value).split(/\s*~\s*/);
+  return [parts[0] || '', parts[1] || ''];
+}
+
+function setJournalField(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = value == null ? '' : value;
+}
+
+function setJournalData(data) {
+  if (!data || typeof data !== 'object') return;
+  const [amStart, amEnd] = splitJournalTimeRange(data.am_time);
+  const [pmStart, pmEnd] = splitJournalTimeRange(data.pm_time);
+
+  setJournalField('j_date', data.date || '');
+  setJournalField('j_author', data.author || '문지영');
+  setJournalField('j_am_preacher', data.am_preacher || '김병혁 목사');
+  setJournalField('j_am_time_start', amStart);
+  setJournalField('j_am_time_end', amEnd);
+  setJournalField('j_am_title', data.am_title || '');
+  setJournalField('j_am_scripture', data.am_scripture || '');
+  setJournalField('j_am_pre', data.am_pre || '');
+  setJournalField('j_am_hymns', data.am_hymns || '');
+  setJournalField('j_am_creed', data.am_creed || '');
+  setJournalField('j_am_sacrament', data.am_sacrament || '');
+  setJournalField('j_am_male', data.am_male || 0);
+  setJournalField('j_am_female', data.am_female || 0);
+  setJournalField('j_am_total', data.am_total || 0);
+  setJournalField('j_pm_prayer', data.pm_prayer || '');
+  setJournalField('j_pm_leader', data.pm_leader || '');
+  setJournalField('j_pm_time_start', pmStart);
+  setJournalField('j_pm_time_end', pmEnd);
+  setJournalField('j_pm_title', data.pm_title || '');
+  setJournalField('j_pm_scripture', data.pm_scripture || '');
+  setJournalField('j_pm_hymns', data.pm_hymns || '');
+  setJournalField('j_pm_creed', data.pm_creed || '');
+  setJournalField('j_pm_male', data.pm_male || 0);
+  setJournalField('j_pm_female', data.pm_female || 0);
+  setJournalField('j_pm_total', data.pm_total || 0);
+  setJournalField('j_visitors', data.visitors || '');
+  setJournalField('j_absences', data.absences || '');
+  setJournalField('j_announcements', data.announcements || '');
+  setJournalField('j_other', data.other || '');
+  setJournalField('j_kakao_text', data.kakao_raw || '');
+
+  if (data.study_classes && Array.isArray(data.study_classes)) {
+    kakaoStudyData = { classes: data.study_classes };
+    displayKakaoResult(kakaoStudyData);
+  } else {
+    kakaoStudyData = null;
+    const kakaoResult = document.getElementById('kakaoResult');
+    if (kakaoResult) kakaoResult.style.display = 'none';
+  }
+}
+
+async function saveJournalToFirebase(triggerGenerate) {
   const data = getJournalData();
   if (!data.date) { alert('날짜를 먼저 선택해주세요.'); return; }
   const journalData = {
@@ -1842,14 +2105,53 @@ function saveJournalToFirebase(triggerGenerate) {
   if (kakaoStudyData && kakaoStudyData.classes && kakaoStudyData.classes.length > 0) {
     journalData.study_classes = kakaoStudyData.classes;
   }
-  const FB_URL = "https://sdgc-ae7f9-default-rtdb.asia-southeast1.firebasedatabase.app";
-  fetch(`${FB_URL}/journal/${data.date}.json`, {
-    method:'PATCH',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(journalData)
-  }).then(r => {
-    if (r.ok) showSaveBadge(triggerGenerate ? '일지 생성 요청됨!' : '일지 저장됨');
-  }).catch(e => alert('저장 오류: '+e.message));
+  try {
+    const r = await fetch(`${JOURNAL_FB_URL}/journal/${data.date}.json`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(journalData)
+    });
+    if (!r.ok) throw new Error(`Firebase 응답 오류 (${r.status})`);
+    showSaveBadge(triggerGenerate ? '일지 생성 요청됨!' : '일지 저장됨');
+  } catch(e) {
+    alert('저장 오류: '+e.message);
+  }
+}
+
+async function loadJournalFromFirebase() {
+  const date = document.getElementById('j_date').value;
+  const statusEl = document.getElementById('journalCrudStatus');
+  if (!date) { alert('날짜를 먼저 선택해주세요.'); return; }
+  statusEl.textContent = '저장 일지 불러오는 중...';
+  try {
+    const r = await fetch(`${JOURNAL_FB_URL}/journal/${date}.json`);
+    if (!r.ok) throw new Error(`Firebase 응답 오류 (${r.status})`);
+    const data = await r.json();
+    if (!data) {
+      statusEl.textContent = '해당 날짜에 저장된 일지가 없습니다.';
+      return;
+    }
+    setJournalData({ ...data, date: data.date || date });
+    statusEl.textContent = '저장 일지 불러오기 완료';
+  } catch(e) {
+    statusEl.textContent = '불러오기 오류: ' + e.message;
+  }
+}
+
+async function deleteJournalFromFirebase() {
+  const date = document.getElementById('j_date').value;
+  const statusEl = document.getElementById('journalCrudStatus');
+  if (!date) { alert('날짜를 먼저 선택해주세요.'); return; }
+  if (!confirm(`${date} 저장 일지를 삭제할까요?`)) return;
+  statusEl.textContent = '저장 일지 삭제 중...';
+  try {
+    const r = await fetch(`${JOURNAL_FB_URL}/journal/${date}.json`, { method:'DELETE' });
+    if (!r.ok) throw new Error(`Firebase 응답 오류 (${r.status})`);
+    statusEl.textContent = '저장 일지 삭제 완료';
+    showSaveBadge('일지 삭제됨');
+  } catch(e) {
+    statusEl.textContent = '삭제 오류: ' + e.message;
+  }
 }
 
 function generateJournal(type) {
@@ -2203,11 +2505,15 @@ function loadAttendanceToJournal() {
   }
 
   function fbSet(path, data) {
-    fetch(`${FB_URL}/${path}.json`, {
+    return fetch(`${FB_URL}/${path}.json`, {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(data)
     }).catch(e => console.log('FB set error:', e));
+  }
+
+  function fbDelete(path) {
+    return fetch(`${FB_URL}/${path}.json`, { method: 'DELETE' }).catch(e => console.log('FB delete error:', e));
   }
 
   window._syncOne = function(memberId, present, reason) {
@@ -2216,6 +2522,63 @@ function loadAttendanceToJournal() {
     fbSet(`attendance/${sessionKey}/${key}`, { present, reason: reason || '' });
     showSyncStatus("ok");
   };
+
+  window._syncMemberMemo = function(memberId, text) {
+    const path = `memberMemos/${memberId}`;
+    if (text && String(text).trim()) fbSet(path, String(text));
+    else fbDelete(path);
+  };
+
+  window._syncDateMemo = function(date, session, text) {
+    const path = `dateMemos/${date}/${session}`;
+    if (text && String(text).trim()) fbSet(path, String(text));
+    else fbDelete(path);
+  };
+
+  function pollMemberMemos() {
+    fbGet('memberMemos', function(data) {
+      const map = (data && typeof data === 'object') ? data : {};
+      let changed = false;
+      members.forEach(m => {
+        // don't clobber a memo currently open/being edited in the modal
+        if (memoMemberId != null && String(m.id) === String(memoMemberId)) return;
+        let incoming = '';
+        if (map[m.id] != null) incoming = String(map[m.id]);
+        else if (map[String(m.id)] != null) incoming = String(map[String(m.id)]);
+        if ((m.memo || '') !== incoming) { m.memo = incoming; changed = true; }
+      });
+      if (changed) {
+        localStorage.setItem('churchMembers', JSON.stringify(members));
+        renderMemberList();
+        renderManageList();
+      }
+    });
+  }
+
+  function pollDateMemos() {
+    fbGet('dateMemos', function(data) {
+      const incoming = {};
+      if (data && typeof data === 'object') {
+        Object.keys(data).forEach(date => {
+          const sess = data[date];
+          if (sess && typeof sess === 'object') {
+            Object.keys(sess).forEach(s => {
+              if (sess[s] != null) incoming[`${date}_${s}`] = String(sess[s]);
+            });
+          }
+        });
+      }
+      // preserve the key the user is actively editing (not yet synced to server)
+      if (dateMemoPendingKey != null) {
+        incoming[dateMemoPendingKey] = dateMemos[dateMemoPendingKey] != null ? dateMemos[dateMemoPendingKey] : '';
+      }
+      if (JSON.stringify(dateMemos) !== JSON.stringify(incoming)) {
+        dateMemos = incoming;
+        localStorage.setItem('churchDateMemos', JSON.stringify(dateMemos));
+        loadDateMemoUI();
+      }
+    });
+  }
 
   function normalizeFirebaseData(data) {
     if (!data || typeof data !== 'object') return data;
@@ -2250,7 +2613,11 @@ function loadAttendanceToJournal() {
 
   setTimeout(function() {
     pollAttendance();
+    pollMemberMemos();
+    pollDateMemos();
     setInterval(pollAttendance, 5000);
+    setInterval(pollMemberMemos, 5000);
+    setInterval(pollDateMemos, 5000);
   }, 1000);
 })();
 
