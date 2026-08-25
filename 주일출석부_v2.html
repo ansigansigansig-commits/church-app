@@ -1348,6 +1348,9 @@ function init() {
   document.getElementById("memberCount").textContent = members.length;
   const journalDateInput = document.getElementById("j_date");
   if (journalDateInput && !journalDateInput.value) journalDateInput.value = selectedDate;
+
+  // 교인 명단 Firebase 동기화 (다른 기기에서 추가한 회원 반영) — 실패해도 로컬 모드로 정상 동작
+  if (window._initMembersSync) window._initMembersSync();
 }
 
 // ===================== SAVE =====================
@@ -1629,6 +1632,7 @@ function confirmAddMember() {
   if (!name) return;
   members.push({ id: Date.now(), name, gender: newMemberGender });
   saveLocal();
+  if (window._syncMembersList) window._syncMembersList();
   renderManageList();
   renderMemberList();
   document.getElementById("memberCount").textContent = members.length;
@@ -1653,6 +1657,7 @@ function renderManageList() {
 function removeMember(id) {
   members = members.filter(m => m.id !== id);
   saveLocal();
+  if (window._syncMembersList) window._syncMembersList();
   renderManageList();
   renderMemberList();
   if (scriptUrl) syncMembers();
@@ -2516,6 +2521,109 @@ function loadAttendanceToJournal() {
     return fetch(`${FB_URL}/${path}.json`, { method: 'DELETE' }).catch(e => console.log('FB delete error:', e));
   }
 
+  // ===== 교인 명단(members) 동기화 =====
+  function getDeviceId() {
+    let id = localStorage.getItem('churchDeviceId');
+    if (!id) {
+      id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+      localStorage.setItem('churchDeviceId', id);
+    }
+    return id;
+  }
+  const deviceId = getDeviceId();
+
+  function fbGetAsync(path) {
+    return fetch(`${FB_URL}/${path}.json`).then(r => r.json());
+  }
+
+  function stripMembersForFirebase(list) {
+    return list.map(m => ({ id: m.id, name: m.name, gender: m.gender }));
+  }
+
+  function pushMembersToFirebase(list) {
+    return fbSet('members', { list: stripMembersForFirebase(list), updatedAt: Date.now(), updatedBy: deviceId });
+  }
+
+  // Firebase 리스트를 local members에 반영. 메모는 memberMemos 경로로 별도 동기화되므로
+  // 여기서는 기존 로컬 값을 이름 기준으로 그대로 보존한다.
+  function applyFirebaseMembersList(fbList) {
+    const oldByName = {};
+    members.forEach(m => { oldByName[m.name] = m; });
+    members = fbList.map(m => ({
+      id: m.id,
+      name: m.name,
+      gender: m.gender,
+      memo: (oldByName[m.name] && typeof oldByName[m.name].memo === 'string') ? oldByName[m.name].memo : ''
+    }));
+    localStorage.setItem('churchMembers', JSON.stringify(members));
+  }
+
+  function refreshMemberViews() {
+    renderMemberList();
+    renderManageList();
+    const cnt = document.getElementById('memberCount');
+    if (cnt) cnt.textContent = members.length;
+  }
+
+  // 이름 기준 union 병합 — 어느 한쪽에만 있는 사람도 전부 보존, 겹치는 이름은 Firebase 쪽 값 채택
+  function unionMembersByName(localList, fbList) {
+    const result = fbList.map(m => ({ id: m.id, name: m.name, gender: m.gender }));
+    const seen = new Set(result.map(m => m.name));
+    localList.forEach(m => {
+      if (!seen.has(m.name)) { result.push({ id: m.id, name: m.name, gender: m.gender }); seen.add(m.name); }
+    });
+    return result;
+  }
+
+  // 명단 변경(추가/삭제) 직후 호출 — 로컬 리스트 전체를 Firebase에 반영
+  window._syncMembersList = function() {
+    try {
+      pushMembersToFirebase(members).then(() => {
+        localStorage.setItem('membersFbSynced', '1');
+      });
+    } catch (e) { console.log('members FB sync error:', e); }
+  };
+
+  // init()에서 1회 호출 — Firebase members 노드 유무/동기화 플래그에 따라 시드·union·채택 중 하나를 수행
+  window._initMembersSync = async function() {
+    try {
+      const data = await fbGetAsync('members');
+      if (!data || !Array.isArray(data.list) || data.list.length === 0) {
+        // Firebase members 노드 없음 → 현재 로컬 명단으로 시드 (대상이 비어있을 때만 쓰므로 실데이터 덮어쓰기 아님)
+        await pushMembersToFirebase(members);
+        localStorage.setItem('membersFbSynced', '1');
+        return;
+      }
+      if (!localStorage.getItem('membersFbSynced')) {
+        // 이 기기 최초 1회 → union 병합 (폰 등 다른 기기에서만 추가된 회원 보존)
+        const merged = unionMembersByName(members, data.list);
+        applyFirebaseMembersList(merged);
+        localStorage.setItem('membersFbSynced', '1');
+        await pushMembersToFirebase(members);
+        refreshMemberViews();
+      } else {
+        // 이후 로드 → Firebase를 truth로 채택
+        applyFirebaseMembersList(data.list);
+        refreshMemberViews();
+      }
+    } catch (e) {
+      console.log('members FB init sync error:', e);
+    }
+  };
+
+  function pollMembersList() {
+    if (!localStorage.getItem('membersFbSynced')) return; // 최초 union 동기화 전에는 폴링 적용 금지 (로컬 전용 회원 유실 방지)
+    fbGet('members', function(data) {
+      if (!data || !Array.isArray(data.list)) return;
+      if (data.updatedBy && data.updatedBy === deviceId) return; // 자기 write 에코 무시
+      const curSig = members.map(m => m.id + ':' + m.name + ':' + m.gender).sort().join('|');
+      const inSig = data.list.map(m => m.id + ':' + m.name + ':' + m.gender).sort().join('|');
+      if (curSig === inSig) return;
+      applyFirebaseMembersList(data.list);
+      refreshMemberViews();
+    });
+  }
+
   window._syncOne = function(memberId, present, reason) {
     const key = String(memberId);
     const sessionKey = getSessionKey();
@@ -2615,9 +2723,11 @@ function loadAttendanceToJournal() {
     pollAttendance();
     pollMemberMemos();
     pollDateMemos();
+    pollMembersList();
     setInterval(pollAttendance, 5000);
     setInterval(pollMemberMemos, 5000);
     setInterval(pollDateMemos, 5000);
+    setInterval(pollMembersList, 5000);
   }, 1000);
 })();
 
