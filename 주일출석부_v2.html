@@ -1251,10 +1251,13 @@ const MEMBERS_DEFAULT = [
   {id:79,name:"김수인",gender:"여"},{id:80,name:"김혜인",gender:"여"},{id:81,name:"표병진",gender:"남"},
   {id:82,name:"신명자",gender:"여"},{id:83,name:"김영숙",gender:"여"},{id:84,name:"표정호",gender:"남"},
   {id:85,name:"표지훈",gender:"남"},{id:86,name:"표시은",gender:"여"},{id:87,name:"장진욱",gender:"남"},
-  {id:88,name:"이주선",gender:"여"},{id:89,name:"하성도",gender:"남"}
+  {id:89,name:"하성도",gender:"남"}
 ];
 
 const REASONS = ["병결","여행","출장","경조사","기타"];
+
+// 항상 결석란에 강제 포함(present:true가 아니면) — auto_journal.py FIXED_ABSENTEES와 동일 유지
+const FIXED_ABSENTEES = ["고윤석","고영민","고영우","박송주","박송빈","김수인","김혜인"];
 
 let members = [];
 let attendance = {};
@@ -2482,6 +2485,19 @@ function loadAttendanceToJournal() {
     if (amAbs && pmAbs) absences.both.push(m.name+tag);
     else if (amAbs) absences.am.push(m.name+tag);
     else if (pmAbs) absences.pm.push(m.name+tag);
+  });
+  // 고정 결석멤버 7명 — present:true가 아니면 강제 포함(중복 금지, 기존 나열 뒤에 추가). auto_journal.py compute_attendance()와 동일 로직.
+  const fixedAlready = new Set([...absences.both, ...absences.am, ...absences.pm].map(n => n.split('(')[0]));
+  FIXED_ABSENTEES.forEach(name => {
+    if (fixedAlready.has(name)) return;
+    const mem = members.find(x => x.name === name);
+    const amKey2 = date+'_오전', pmKey2 = date+'_오후';
+    const amPresent = !!(mem && attendance[amKey2]?.[mem.id]?.present === true);
+    const pmPresent = !!(mem && attendance[pmKey2]?.[mem.id]?.present === true);
+    if (amPresent && pmPresent) return;
+    if (!amPresent && !pmPresent) absences.both.push(name);
+    else if (!amPresent) absences.am.push(name);
+    else if (!pmPresent) absences.pm.push(name);
   });
   document.getElementById('j_am_male').value = amM;
   document.getElementById('j_am_female').value = amF;
